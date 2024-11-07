@@ -7,8 +7,7 @@ class DataClean():
     def __init__(self,path):
         assert(isinstance(path, str)),f'InvalidInput: path is not string'
         try:
-            df = pd.read_csv(path, delimiter = ';', encoding_errors = 'ignore')
-            self.df = df.copy()
+            self.df = pd.read_csv(path, delimiter = ';', encoding_errors = 'ignore')
         except FileNotFoundError as fne:
             print(f'{fne}: file not found ')
 
@@ -18,13 +17,8 @@ class DataClean():
         Here, the DataFrame df column 'currency' is used as means for checking for 
         incorrect data entries
         """
-        df = self.df
-        ind = df[df['currency'] != 'USD'].index
-        clean_df = df.copy()
-        if id:
-            clean_df.drop(index =ind, inplace = True)
-        
-
+        clean_df = self.df.copy()
+        clean_df = clean_df[clean_df['currency']=='USD']
         clean_df.drop_duplicates(keep = 'first',inplace = True)
         if 'bathrooms' in clean_df.columns:
             clean_df['bathrooms'] = clean_df['bathrooms'].apply(lambda x: float(x))
@@ -38,11 +32,11 @@ class DataClean():
         ### adding any additional cleaning steps from other columns
         ### Can also add required columns
         ### can drop unnecessary columns
-        clean_df = clean_df.reset_index(inplace = True)
+        clean_df.reset_index(drop  = True, inplace = True)
         self.clean_df = clean_df
 
         print(f'Data cleaning is success, returning clean_df')
-        return clean_df
+        return self.clean_df
     
     
     
