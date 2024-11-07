@@ -19,10 +19,8 @@ class DataClean():
         incorrect data entries
         """
         df = self.df
-        ind = df[df['currency'] != 'USD'].index
         clean_df = df.copy()
-        if id:
-            clean_df.drop(index =ind, inplace = True)
+        clean_df = clean_df[clean_df['currency']=='USD']
         
 
         clean_df.drop_duplicates(keep = 'first',inplace = True)
@@ -38,11 +36,11 @@ class DataClean():
         ### adding any additional cleaning steps from other columns
         ### Can also add required columns
         ### can drop unnecessary columns
-        clean_df = clean_df.reset_index(inplace = True)
+        clean_df.reset_index(drop  = True,inplace = True)
         self.clean_df = clean_df
 
         print(f'Data cleaning is success, returning clean_df')
-        return clean_df
+        return self.clean_df
     
     
     
