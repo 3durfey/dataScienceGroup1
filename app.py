@@ -53,7 +53,7 @@ st.write(
 # Review Sentiment Analysis
 We pull data from our Backblaze storage bucket, and render it in Streamlit.
 ''')
-df_coffee = get_data()
+df_apartments = get_data()
 
 # ------------------------------
 # PART 1 : Filter Data
@@ -64,7 +64,7 @@ st.write(
 **Your filtered data:**
 ''')
 
-
+st.write(df_apartments.head(1))
 # ------------------------------
 # PART 2 : Plot
 # ------------------------------
