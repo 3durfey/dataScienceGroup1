@@ -3,7 +3,7 @@ import pickle
 
 import streamlit as st
 from dotenv import load_dotenv
-
+from utils.dataclean_jagath import Clean
 from utils.b2 import B2
 
 
@@ -31,7 +31,6 @@ def get_data():
     # collect data frame of reviews and their sentiment
     b2.set_bucket(os.environ['B2_BUCKETNAME'])
     df_coffee = b2.get_df(REMOTE_DATA)
-    print("test")  # Check the content before passing it to pd.read_csv()
     return df_coffee
 
 
@@ -54,17 +53,21 @@ st.write(
 We pull data from our Backblaze storage bucket, and render it in Streamlit.
 ''')
 df_apartments = get_data()
-
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
+
+df_cleaned = Clean(df_apartments)
 
 st.write(
 '''
 **Your filtered data:**
 ''')
+columnNames = list(df_apartments.columns)
+columnNames = ";".join(columnNames).split(";")
 
-st.write(df_apartments.head(1))
+for n in columnNames:
+    st.write(n)
 # ------------------------------
 # PART 2 : Plot
 # ------------------------------

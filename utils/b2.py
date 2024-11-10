@@ -4,6 +4,7 @@ import pandas as pd
 import boto3
 from botocore.config import Config
 import chardet
+from io import BytesIO
 
 
 class B2(object):
@@ -56,10 +57,9 @@ class B2(object):
         print(f"Detected encoding: {detected_encoding}")
         
         # Read the CSV using the detected encoding and a new BytesIO object
-        from io import BytesIO
-        df = pd.read_csv(BytesIO(content), encoding=detected_encoding, on_bad_lines='skip')
-        
+        df = pd.read_csv(BytesIO(content), encoding=detected_encoding, on_bad_lines='skip', sep=';')
         return df
+    
     def get_object(self, remote_path):
         obj = self.bucket.Object(remote_path)
         return obj.get()['Body']
