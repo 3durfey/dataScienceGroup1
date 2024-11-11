@@ -4,17 +4,15 @@ import numpy as np
 import re
 
 
+
 def Clean(df):
     """
     Here, the DataFrame df column 'currency' is used as means for checking for 
     incorrect data entries
     """
-    ind = df[df['currency'] != 'USD'].index
     clean_df = df.copy()
-    if id:
-        clean_df.drop(index =ind, inplace = True)
+    clean_df = clean_df[clean_df['currency']=='USD']
     
-
     clean_df.drop_duplicates(keep = 'first',inplace = True)
     if 'bathrooms' in clean_df.columns:
         clean_df['bathrooms'] = clean_df['bathrooms'].apply(lambda x: float(x))
@@ -25,16 +23,11 @@ def Clean(df):
     if 'dogs_allowed' not in clean_df.columns:
         clean_df['dogs_allowed'] = clean_df['pets_allowed'].isin({'Cats,Dogs', 'Dogs'})
 
-    ### adding any additional cleaning steps from other columns
-    ### Can also add required columns
-    ### can drop unnecessary columns
-    clean_df.reset_index(inplace=True, drop=True)  # This resets the index in place but does not return anything
+    clean_df.reset_index(drop  = True,inplace = True)
+    clean_df = clean_df
 
     print(f'Data cleaning is success, returning clean_df')
     return clean_df
-
-    
-    
 
 
 
