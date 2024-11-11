@@ -45,52 +45,41 @@ def get_model():
 # ------------------------------------------------------
 #                         APP
 # ------------------------------------------------------
-# ------------------------------
-# PART 0 : Overview
-# ------------------------------
-st.write(
-'''
-# Review Sentiment Analysis
-We pull data from our Backblaze storage bucket, and render it in Streamlit.
-''')
+
 df_apartments = get_data()
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
 df_cleaned0 = Clean(df_apartments)
 df_cleaned1 = CleanCityname(df_cleaned0)
-print(df_cleaned0.columns)
 
-st.write(
-'''
-**Your filtered data:**
-''')
 columnNames = list(df_apartments.columns)
 columnNames = ";".join(columnNames).split(";")
 
-for n in columnNames:
-    st.write(n)
-# ------------------------------
-# PART 2 : Plot
-# ------------------------------
-
-st.write(
-'''
-## Visualize
-Compare this subset of reviews with the rest of the data.
-'''
-)
-
 
 # ------------------------------
-# PART 3 : Analyze Input Sentiment
+# Layout for Filters: State and Bedrooms
 # ------------------------------
 
-st.write(
-'''
-## Custom Sentiment Check
+# Get unique states and max bedrooms
+states = df_cleaned1['state'].unique()
+max_bedrooms = int(df_cleaned1['bedrooms'].max())
 
-Compare these results with the sentiment scores of your own input.
-'''
-)
+# Display filters in one row
+col1, col2 = st.columns(2)
+with col1:
+    selected_state = st.selectbox("Select a state:", states)
+with col2:
+    selected_bedrooms = st.selectbox("Select bedrooms (1 to max):", range(1, max_bedrooms + 1))
 
+# Button to apply filters
+if st.button("Show Filtered Apartments"):
+    # Filter the data based on selections
+    filtered_data = df_cleaned1[
+        (df_cleaned1['state'] == selected_state) &
+        (df_cleaned1['bedrooms'] == selected_bedrooms)
+    ]
+
+    # Display the filtered data as a single-row table
+    st.write(f"Apartments in {selected_state} with {selected_bedrooms} bedrooms:")
+    st.table(filtered_data)  # Only showing the first row for simplicity
