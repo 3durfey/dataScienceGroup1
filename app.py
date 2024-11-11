@@ -31,8 +31,8 @@ b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
 def get_data():
     # collect data frame of reviews and their sentiment
     b2.set_bucket(os.environ['B2_BUCKETNAME'])
-    df_coffee = b2.get_df(REMOTE_DATA)
-    return df_coffee
+    df_apartments = b2.get_df(REMOTE_DATA)
+    return df_apartments
 
 
 @st.cache_resource
