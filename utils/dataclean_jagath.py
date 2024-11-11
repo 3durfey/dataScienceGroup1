@@ -9,7 +9,6 @@ def Clean(df):
     Here, the DataFrame df column 'currency' is used as means for checking for 
     incorrect data entries
     """
-    print(df.columns)
     ind = df[df['currency'] != 'USD'].index
     clean_df = df.copy()
     if id:
@@ -29,7 +28,7 @@ def Clean(df):
     ### adding any additional cleaning steps from other columns
     ### Can also add required columns
     ### can drop unnecessary columns
-    clean_df = clean_df.reset_index(inplace = True)
+    clean_df.reset_index(inplace=True, drop=True)  # This resets the index in place but does not return anything
 
     print(f'Data cleaning is success, returning clean_df')
     return clean_df

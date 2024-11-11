@@ -1,5 +1,5 @@
 import numpy as np
-from dataclean_and_score.dataclean import DataClean
+from utils.dataclean_jagath import DataClean
 
 instance  = DataClean(path)
 clean_df = instance.clean_df
@@ -22,13 +22,13 @@ class score():
         arr = [rate]
         flag = 1
         while sum(arr)<10:
-            if flag == 1
+            if flag == 1:
                 if arr[0] >=2 or (arr[0] == rate):
                     ### insert amd give 1
                     arr.insert(1)
                 elif arr[0]==1:
                     arr[0]+=1
-            if flag == -1    
+            if flag == -1:
                 if arr[-1]== rate or (arr[-1]>=2):
                     ##append and give 1
                     arr.append(1)

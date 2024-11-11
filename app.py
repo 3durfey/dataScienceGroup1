@@ -4,6 +4,7 @@ import pickle
 import streamlit as st
 from dotenv import load_dotenv
 from utils.dataclean_jagath import Clean
+from utils.peter import CleanCityname
 from utils.b2 import B2
 
 
@@ -56,8 +57,9 @@ df_apartments = get_data()
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
-
-df_cleaned = Clean(df_apartments)
+df_cleaned0 = Clean(df_apartments)
+df_cleaned1 = CleanCityname(df_cleaned0)
+print(df_cleaned0.columns)
 
 st.write(
 '''
