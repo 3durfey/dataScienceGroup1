@@ -162,3 +162,4 @@ def plot_scatter_longitude_latitude(data):
     
     # Display in Streamlit
     st.pyplot(plt)
+
