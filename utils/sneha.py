@@ -6,6 +6,11 @@ from sklearn.preprocessing import PolynomialFeatures, OneHotEncoder, StandardSca
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import mean_squared_error, r2_score
 import pandas as pd
+    # utils/sneha.py
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import streamlit as st
 
 
 
@@ -107,3 +112,53 @@ def predict_prices(feature_data, pipeline):
     result_df['predicted_price'] = predicted_prices  # Add predictions as a new column
 
     return result_df
+
+
+
+def count_valid_amenities(amenities):
+    """
+    Count the number of valid amenities in a comma-separated string.
+    """
+    if pd.isnull(amenities):
+        return 0
+    amenities_list = [item.strip() for item in amenities.split(',') if item.strip()]
+    return len(amenities_list)
+
+def plot_boxplot_price_by_amenity_count(data, max_price=3000):
+    """
+    Display a box plot of price by amenity count.
+    Filters data by price and calculates amenity count for each row.
+    
+    Parameters:
+    - data: pd.DataFrame containing 'amenities' and 'price' columns.
+    - max_price: Maximum price value to filter the data by.
+    """
+    # Add AmenityCount column
+    data['AmenityCount'] = data['amenities'].apply(count_valid_amenities)
+    filtered_data = data[data['price'] < max_price]
+    
+    # Create the box plot
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(x=filtered_data['AmenityCount'], y=filtered_data['price'])
+    plt.xlabel('Amenity Count')
+    plt.ylabel('Price')
+    plt.title('Box Plot of Price by Amenity Count')
+    
+    # Display in Streamlit
+    st.pyplot(plt)
+
+def plot_scatter_longitude_latitude(data):
+    """
+    Display a scatter plot of longitude vs latitude.
+    
+    Parameters:
+    - data: pd.DataFrame containing 'longitude' and 'latitude' columns.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.scatter(data['longitude'], data['latitude'], color='red', marker='o')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.title('Scatter Plot of Latitude vs Longitude')
+    
+    # Display in Streamlit
+    st.pyplot(plt)
