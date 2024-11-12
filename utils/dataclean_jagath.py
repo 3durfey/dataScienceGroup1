@@ -1,13 +1,3 @@
-#### dataclean functions #######
-import pandas as pd
-import numpy as np
-import re
-
-import re
-
-
-
-def Clean(df):
     """
     Here, the DataFrame df column 'currency' is used as means for checking for 
     incorrect data entries
@@ -30,4 +20,3 @@ def Clean(df):
 
     print(f'Data cleaning is success, returning clean_df')
     return clean_df
-
