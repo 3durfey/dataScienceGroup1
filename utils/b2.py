@@ -1,3 +1,66 @@
+import mimetypes 
+
+import pandas as pd
+import boto3
+from botocore.config import Config
+import chardet
+from io import BytesIO
+
+
+class B2(object):
+    def __init__(self, endpoint, key_id, secret_key):
+        """
+        Set up a connection between the current instance and Backblaze.
+
+        Parameters
+        ----------
+        endpoint : str
+            The endpoint, usually starting with "https://s3. ..."
+        key_id : str
+            The "Key ID" for the application key from Backblaze.
+        secret_key : str
+            The Key secret, or "Key" for the Backblaze app key itself.
+        """
+        # Return a boto3 resource object for B2 service
+        self.b2 = boto3.resource(service_name='s3',
+                                endpoint_url=endpoint,
+                                aws_access_key_id=key_id,
+                                aws_secret_access_key=secret_key,
+                                config=Config(signature_version='s3v4'))
+        
+    def set_bucket(self, bucket_name):
+        """
+        Select a bucket accessible by the chosen app key.
+
+        Parameters
+        ----------
+        bucket_name : str
+            Name of Bucket
+        """
+        self.bucket = self.b2.Bucket(bucket_name)
+
+    def list_files(self, verbose=False):
+        if verbose:
+            return [f.get() for f in self.bucket.objects.all()]
+        else:
+            return [f.key for f in self.bucket.objects.all()]
+
+    def get_df(self, remote_path):
+        # Get file
+        obj = self.bucket.Object(remote_path)
+        
+        # Get the raw content of the file
+        content = obj.get()['Body'].read()
+        
+        # Detect encoding
+        detected_encoding = chardet.detect(content)['encoding']
+        print(f"Detected encoding: {detected_encoding}")
+        
+        # Read the CSV using the detected encoding and a new BytesIO object
+        df = pd.read_csv(BytesIO(content), encoding=detected_encoding, on_bad_lines='skip', sep=';')
+        return df
+    
+    def get_object(self, remote_path):
         obj = self.bucket.Object(remote_path)
         return obj.get()['Body']
 
@@ -23,3 +86,4 @@
                 "ContentType": mimetype
             }
         )
+    

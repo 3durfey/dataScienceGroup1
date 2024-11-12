@@ -1,3 +1,10 @@
+import pandas as pd
+import numpy as np
+import re
+
+
+
+def Clean(df):
     """
     Here, the DataFrame df column 'currency' is used as means for checking for 
     incorrect data entries
@@ -17,6 +24,6 @@
 
     clean_df.reset_index(drop  = True,inplace = True)
     clean_df = clean_df
-
     print(f'Data cleaning is success, returning clean_df')
     return clean_df
+
