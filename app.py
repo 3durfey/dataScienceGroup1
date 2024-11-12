@@ -3,7 +3,7 @@ import pickle
  
 import streamlit as st
 from dotenv import load_dotenv
-from utils.dataclean_jagath import Clean
+from utils.jagath import Clean
 from utils.peter import CleanCityname
 from utils.b2 import B2
  
