@@ -58,29 +58,60 @@ columnNames = ";".join(columnNames).split(";")
  
  
 # ------------------------------
-# Layout for Filters: State and Bedrooms
+# Layout for Filters: State and Bedrooms , Price and Bathrooms
 # ------------------------------
  
 # Get unique states and max bedrooms
 states = df_cleaned1['state'].unique()
 max_bedrooms = int(df_cleaned1['bedrooms'].max())
- 
+max_bathrooms = int(df_cleaned1['bathrooms'].max())
+min_price = int(df_cleaned1['price'].min())
+max_price = int(df_cleaned1['price'].max())
+
 # Display filters in one row
 col1, col2 = st.columns(2)
 with col1:
     selected_state = st.selectbox("Select a state:", states)
 with col2:
-    selected_bedrooms = st.selectbox("Select bedrooms (1 to max):", range(1, max_bedrooms + 1))
+    selected_bedrooms = st.selectbox("Select bedrooms (1 to {max_bedrooms}):", range(1, max_bedrooms + 1))
  
+col3,col4 = st.columns(2)
+with col3:
+    selected_bathrooms = st.selectbox(f'Select bathrooms (1 to {max_bathrooms})',range(1, max_bathrooms+1))
+with col4:
+    selected_price = st.slider(
+    "Select price range:",
+    min_value=min_price,
+    max_value=max_price,
+    value=(min_price, max_price),
+    step=50
+)
+
+
+
 # Button to apply filters
 if st.button("Show Filtered Apartments"):
     # Filter the data based on selections
     filtered_data = df_cleaned1[
         (df_cleaned1['state'] == selected_state) &
-        (df_cleaned1['bedrooms'] == selected_bedrooms)
+        (df_cleaned1['bedrooms'] == selected_bedrooms)&
+        (df_cleaned1['price']>=selected_price[0]) &
+        (df_cleaned1['price']<= selected_price[1]) &
+        (df_cleaned1['bathrooms']== selected_bedrooms)
     ]
  
     # Display the filtered data as a single-row table
     st.write(f"Apartments in {selected_state} with {selected_bedrooms} bedrooms:")
     st.table(filtered_data)  # Only showing the first row for simplicity
- 
+
+
+#-------------------------------------------------------------------------
+#               GET SCORE BASED TOP APARTMENTS
+#-------------------------------------------------------------------------
+
+# if st.button('Show Similar Apartments'):
+#     row5,row6 = st.row(2)
+
+
+
+
