@@ -109,8 +109,18 @@ if st.button("Show Filtered Apartments"):
 #               GET SCORE BASED TOP APARTMENTS
 #-------------------------------------------------------------------------
 
-# if st.button('Show Similar Apartments'):
-#     row5,row6 = st.row(2)
+if st.button('Show Similar Apartments'):
+    row5,row6 = st.row(2)
+    with row5:
+        bedroom_rate = st.select_slider(label = 'Bedroom rating',value = [i for i in range(1,11) ])
+    with row6:
+        bathroom_rate = st.select_slider(label = 'Bathroom rating',value = [i for i in range(1,11)])
+    
+    
+
+
+
+
 
 
 
