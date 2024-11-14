@@ -64,7 +64,7 @@ df_cleaned1 = CleanCityname(df_cleaned0)
 df=df_cleaned1 
 
 # Creating a price_per_sqft column  in df
-df['price_per_sqft'] = df['price'] / df['square_feet'].replace(0, np.nan)
+df['price_per_sqft'] = df['price'] / df['square_feet']
 df = df.dropna(subset=['price_per_sqft'])
 
 
