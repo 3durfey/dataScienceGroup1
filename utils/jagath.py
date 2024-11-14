@@ -27,7 +27,7 @@ def Clean(df):
 
     #clean_df.reset_index(drop  = True,inplace = True)
     clean_df = create_half_bathrooms(clean_df)
-    clean_df = clean_df.fillna({'bathrooms':0, 'bedrooms':0})
+    clean_df = clean_df.fillna({'bathrooms':0, 'bedrooms':0, 'state':'ZZ'})
 
     print(f'Data cleaning is success, returning clean_df')
     return clean_df
@@ -44,5 +44,4 @@ def create_half_bathrooms(df):
                 print(f'error occured at {r}')
                 continue
     return df
-
 
