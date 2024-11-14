@@ -1,23 +1,18 @@
-# app.py
 import streamlit as st
 import pandas as pd
-from ucimlrepo import fetch_ucirepo
 from utils.sneha import plot_boxplot_price_by_amenity_count, plot_scatter_longitude_latitude
-
-# Fetch dataset
-apartment_for_rent_classified = fetch_ucirepo(id=555)
-X = apartment_for_rent_classified.data.features
+from app import df_cleaned1 as dataFrame
 
 # Streamlit app layout
 st.title("Apartment for Rent Data Visualization")
- 
+
 #sidebar setting 
 st.sidebar.header("Plot Settings")
 max_price = st.sidebar.slider("Max Price for Box Plot", min_value=500, max_value=5000, value=3000, step=100)
 
 # Box Plot of Price by Amenity Count
 st.subheader("Box Plot of Price by Amenity Count")
-plot_boxplot_price_by_amenity_count(X, max_price)
+plot_boxplot_price_by_amenity_count(dataFrame, max_price)
 
 # Box Plot Section
 st.write("## Price Distribution by Amenity Count")
@@ -31,7 +26,7 @@ st.write(
 
 # Scatter Plot of Longitude vs Latitude
 st.subheader("Scatter Plot of Latitude vs Longitude")
-plot_scatter_longitude_latitude(X)
+plot_scatter_longitude_latitude(dataFrame)
 
 st.write("## Geographical Distribution of Apartments")
 st.write(
@@ -40,7 +35,7 @@ st.write(
     Each red dot represents an apartment location. This plot can help identify clusters or distribution patterns in various regions.
     """
 )
-st.write("### Additional Information")
+st.write("# Additional Information")
 st.write(
     """
     The dataset provides insights into the apartment rental market, including variables like square footage, 
