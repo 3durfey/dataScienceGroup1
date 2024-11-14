@@ -63,6 +63,11 @@ df_cleaned0 = Clean(df_apartments)
 df_cleaned1 = CleanCityname(df_cleaned0)
 df=df_cleaned1 
 
+# Creating a price_per_sqft column  in df
+df['price_per_sqft'] = df['price'] / df['square_feet'].replace(0, np.nan)
+df = df.dropna(subset=['price_per_sqft'])
+
+
 
 # Data preprocessing and model training
 df = df.dropna(subset=['price', 'square_feet', 'bedrooms', 'bathrooms', 'cityname'])
@@ -120,3 +125,5 @@ st.write("### Model Evaluation Metrics")
 st.write(f"Mean Squared Error: {mse:.2f}")
 st.write(f"R-Squared: {r2:.2f}")
 st.write(f"Mean Absolute Error: {mae:.2f}")
+
+
