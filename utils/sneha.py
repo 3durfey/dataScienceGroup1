@@ -6,11 +6,10 @@ from sklearn.preprocessing import PolynomialFeatures, OneHotEncoder, StandardSca
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import mean_squared_error, r2_score
 import pandas as pd
-    # utils/sneha.py
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import streamlit as st
+
 
 
 
@@ -37,49 +36,65 @@ def Clean(df):
     print(f'Data cleaning is success, returning clean_df')
     return clean_df
 
-
+# Function to train a regression model
 def run_regression(df):
-    features = ['AmenityCount','square_feet','bedrooms','bathrooms']
-    target = 'price'
+     
+    """
+    Trains a polynomial regression model to predict rental prices based on features.
+    Returns the trained pipeline and evaluation metrics (R2 and MSE).
+    """
+     
+    features = ['AmenityCount','square_feet','bedrooms','bathrooms'] # Define feature columns
+    target = 'price' # Define target variable
 
-
+    # Separate the features and target
     X = df[features]
     y = df[target]
 
     encoder = OneHotEncoder(handle_unknown="ignore")
     # One-hot encode categorical features and scale numerical features
+
+    # Define preprocessor: One-hot encodes categorical and scales numerical features
     preprocessor = ColumnTransformer(transformers=[
     ('cat', OneHotEncoder(), ['bedrooms','bathrooms','AmenityCount']),
     ('num', StandardScaler(), ['square_feet'])
     ])
  
- 
+    # Polynomial transformation with degree 2
         # Polynomial degree (adjust this as needed)
     poly = PolynomialFeatures(degree=2)
  
-    # Create a pipeline
+    # Create a pipeline with preprocessing, polynomial transformation, and regression
     pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
         ('poly', poly),
         ('regressor', LinearRegression())
     ])
- 
+    
+    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    pipeline.fit(X_train, y_train)
+    pipeline.fit(X_train, y_train) # Train the model pipeline
     print("Model trained successfully.")
- 
+    # Predict on test data
     y_pred = pipeline.predict(X_test)
- 
+    # Calculate Mean Squared Error (MSE) and R-Squared (R2) for model evaluation
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
  
-    return pipeline, y_test, y_pred, r2, mse
+    return pipeline, y_test, y_pred, r2, mse # Return model pipeline and evaluation metrics
 
+
+# Function to generate feature data for predictions
 def generate_feature_data():
+    """
+    Generates synthetic feature data for testing predictions.
+    Returns a DataFrame with square footage, bedrooms, bathrooms, and AmenityCount.
+    """
     # Generate square footage from 500 to 10000 with a step of 100
     sqft_values = np.arange(500, 10001, 100)
     data = []
 
+    # Loop through square footage values to generate bedrooms, bathrooms, and amenities
     for sqft in sqft_values:
         # Set bedrooms based on square footage
         bedrooms = min(8, max(1, sqft // 1000))
@@ -90,6 +105,7 @@ def generate_feature_data():
         # Randomize amenity count for variety
         amenity_count = np.random.randint(1, 10)
 
+        # Append generated data to list
         # Append the generated row to data
         data.append({
             'square_feet': sqft,
@@ -102,8 +118,12 @@ def generate_feature_data():
     feature_df = pd.DataFrame(data)
     return feature_df
 
-
+# Function to predict prices using the trained pipeline
 def predict_prices(feature_data, pipeline):
+    """
+    Predicts rental prices based on feature data and a trained model pipeline.
+    Returns a DataFrame with features and predicted prices.
+    """
     # Predict prices using the trained pipeline
     predicted_prices = pipeline.predict(feature_data)
 
@@ -111,19 +131,22 @@ def predict_prices(feature_data, pipeline):
     result_df = feature_data.copy()  # Start with the features DataFrame
     result_df['predicted_price'] = predicted_prices  # Add predictions as a new column
 
-    return result_df
+    return result_df # Return DataFrame with predictions
 
 
-
+# Helper function to count amenities
 def count_valid_amenities(amenities):
     """
     Count the number of valid amenities in a comma-separated string.
+    Returns the count of amenities for each entry.
     """
     if pd.isnull(amenities):
         return 0
     amenities_list = [item.strip() for item in amenities.split(',') if item.strip()]
     return len(amenities_list)
 
+
+# Function to plot a box plot of price by amenity count
 def plot_boxplot_price_by_amenity_count(data, max_price=3000):
     """
     Display a box plot of price by amenity count.
@@ -147,6 +170,8 @@ def plot_boxplot_price_by_amenity_count(data, max_price=3000):
     # Display in Streamlit
     st.pyplot(plt)
 
+
+# Function to plot a scatter plot of longitude vs latitude
 def plot_scatter_longitude_latitude(data):
     """
     Display a scatter plot of longitude vs latitude.
