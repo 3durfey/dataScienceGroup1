@@ -1,6 +1,8 @@
 import os
 import pickle
- 
+from io import StringIO
+import pandas as pd
+
 import streamlit as st
 from dotenv import load_dotenv
 from utils.jagath import Clean, create_half_bathrooms
@@ -13,7 +15,7 @@ from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution
 #                      APP CONSTANTS
 # ------------------------------------------------------
 REMOTE_DATA = 'apartments_for_rent_classified_10K.csv'
- 
+PREDICTED_PRICES = 'predicted_price.csv' 
  
 # ------------------------------------------------------
 #                        CONFIG
@@ -29,12 +31,12 @@ b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
 #                        CACHING
 # ------------------------------------------------------
 @st.cache_data
-def get_data():
+def get_data(NAME):
     # collect data frame of reviews and their sentiment
     b2.set_bucket(os.environ['B2_BUCKETNAME'])
-    df_apartments = b2.get_df(REMOTE_DATA)
+    df_apartments = b2.get_df(NAME)
     return df_apartments
- 
+
  
 @st.cache_resource
 def get_model():
@@ -47,15 +49,18 @@ def get_model():
 #                         APP
 # ------------------------------------------------------
  
-df_apartments = get_data()
+df_apartments = get_data(REMOTE_DATA)
+df_price_prediction = get_data(PREDICTED_PRICES)
+if df_price_prediction.empty:
+    print("The DataFrame is empty.")
+else:
+    print(df_price_prediction.shape[0])
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
+
 df_cleaned0 = Clean(df_apartments)
 df_cleaned1 = CleanCityname(df_cleaned0)
- 
-columnNames = list(df_apartments.columns)
-columnNames = ";".join(columnNames).split(";")
  
  
 # ------------------------------

@@ -3,65 +3,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-
-
-# data is loaded into df
-import os
-import pickle
- 
-import streamlit as st
-from dotenv import load_dotenv
-from utils.jagath import Clean, create_half_bathrooms
-from utils.peter import CleanCityname
-from utils.b2 import B2
-from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
- 
- 
-# ------------------------------------------------------
-#                      APP CONSTANTS
-# ------------------------------------------------------
-REMOTE_DATA = 'apartments_for_rent_classified_10K.csv'
- 
- 
-# ------------------------------------------------------
-#                        CONFIG
-# ------------------------------------------------------
-load_dotenv()
-# load Backblaze connection
-b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
-        key_id=os.environ['B2_KEYID'],
-        secret_key=os.environ['B2_APPKEY'])
- 
- 
-# ------------------------------------------------------
-#                        CACHING
-# ------------------------------------------------------
-@st.cache_data
-def get_data():
-    # collect data frame of reviews and their sentiment
-    b2.set_bucket(os.environ['B2_BUCKETNAME'])
-    df_apartments = b2.get_df(REMOTE_DATA)
-    return df_apartments
- 
- 
-@st.cache_resource
-def get_model():
-    with open('./model.pickle', 'rb') as f:
-        analyzer = pickle.load(f)
-   
-    return analyzer
- 
-# ------------------------------------------------------
-#                         APP
-# ------------------------------------------------------
- 
-df_apartments = get_data()
-# ------------------------------
-# PART 1 : Filter Data
-# ------------------------------
-df_cleaned0 = Clean(df_apartments)
-df_cleaned1 = CleanCityname(df_cleaned0)
-df=df_cleaned1 
+from app import df_cleaned1 as df
 
 # Creating a price_per_sqft column  in df
 df['price_per_sqft'] = df['price'] / df['square_feet']

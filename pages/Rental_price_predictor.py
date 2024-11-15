@@ -1,27 +1,22 @@
 # Import necessary libraries
 import streamlit as st
 import pandas as pd
-
-# Load data into a DataFrame
-url = "https://raw.githubusercontent.com/3durfey/dataScienceGroup1/refs/heads/main/data/predicted_price.csv"
-
-@st.cache_data
-def load_data():
-    # Read the CSV file from the provided URL
-    df = pd.read_csv(url)
-    return df
-
-# Initialize data
-data = load_data()
-
+from app import df_price_prediction as data
 # App title
 st.title("Rental Price Predictor")
-
 # Step 1: Dropdown for square feet
+# Split the single column into multiple columns based on commas
+data[['square_feet', 'bedrooms', 'bathrooms', 'AmenityCount', 'predicted_price']] = data['square_feet,bedrooms,bathrooms,AmenityCount,predicted_price'].str.split(',', expand=True)
+
+# Drop the original single column if it's no longer needed
+data = data.drop(columns=['square_feet,bedrooms,bathrooms,AmenityCount,predicted_price'])
+
+# Convert columns to appropriate data types (e.g., numeric)
+data = data.apply(pd.to_numeric, errors='ignore')
+
 square_feet = st.selectbox("Select Square Feet", sorted(data['square_feet'].unique()))
 
 # Step 2: Filter data based on square feet selection and populate bedrooms dropdown
-
 filtered_data_sqft = data[data['square_feet'] == square_feet]
 bedrooms = st.selectbox("Select Bedrooms", sorted(filtered_data_sqft['bedrooms'].unique()))
 

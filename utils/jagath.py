@@ -41,7 +41,7 @@ def create_half_bathrooms(df):
                     df.loc[r,'half_bathrooms'] = 1
                     df.loc[r,'bathrooms'] = float(int(df.loc[r,'bathrooms']))
             except:
-                print(f'error occured at {r}')
+                #print(f'error occured at {r}')
                 continue
     return df
 
