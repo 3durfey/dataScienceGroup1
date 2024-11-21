@@ -22,9 +22,9 @@ PREDICTED_PRICES = 'predicted_price.csv'
 # ------------------------------------------------------
 load_dotenv()
 # load Backblaze connection
-b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
-        key_id=os.environ['B2_KEYID'],
-        secret_key=os.environ['B2_APPKEY'])
+b2 = B2(endpoint=os.environ['https://s3.us-east-005.backblazeb2.com'],
+        key_id=os.environ['0051bd80ad086ac0000000001'],
+        secret_key=os.environ['K005cpPVl3/gCrYBD+no4wtx0JynU3Y'])
  
  
 # ------------------------------------------------------
@@ -33,7 +33,7 @@ b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
 @st.cache_data
 def get_data(NAME):
     # collect data frame of reviews and their sentiment
-    b2.set_bucket(os.environ['B2_BUCKETNAME'])
+    b2.set_bucket(os.environ['apartmentBucket'])
     df_apartments = b2.get_df(NAME)
     return df_apartments
 
