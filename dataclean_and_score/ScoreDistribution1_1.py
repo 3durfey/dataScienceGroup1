@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+### Self note handling zero classes situation is pending
 class ScoreDistribution:
     def __init__(self, series, primary, rate):
         """

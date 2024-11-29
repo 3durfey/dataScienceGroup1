@@ -45,3 +45,81 @@ def create_half_bathrooms(df):
                 continue
     return df
 
+
+
+############################################## PCA and Pairwise matrix ###############
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import pairwise_distances
+from sklearn.decomposition import PCA
+
+COLUMNS_CONSIDERED = ['bathrooms', 'bedrooms', 'price', 'square_feet', 'state', 'latitude', 'longitude', 'cats_allowed', 'dogs_allowed']
+class PCA_PAIRWISE:
+    def __init__(self, clean_df):
+        print(f'Available function "_get_df_numeric_columns","_perform_pca" and "get_pairwise_dis" ')
+        self.clean_df = clean_df.copy()
+        self.pcadf = self._get_df_numeric_columns()
+        self.indices = self.pcadf.index
+        self.new_df = self._perform_pca(self.pcadf)
+
+    def _get_df_numeric_columns(self):
+        pcadf = self.clean_df
+        pcadf = pcadf.fillna({'bathrooms':0., 'bedrooms':0., 'state':'NAN'})
+        all_columns = pcadf.columns
+        for c in all_columns: 
+            if c not in COLUMNS_CONSIDERED:
+                try:
+                    pcadf.drop(columns = [c], inplace = True)
+                except:
+                    print(f' Failed to drop {c} column ')
+                    continue
+        pcadf.dropna(inplace = True)
+        pcadf = pd.get_dummies(pcadf,columns = ['state'],drop_first = True)
+        return pcadf
+
+
+    def _perform_pca(self,pcadf):
+        pca = PCA()
+        new_np= pca.fit_transform(pcadf)
+        #sigma_variance = pca.explained_variance_ratio_
+        new_np = new_np[:,:2]   #only two new features considered
+        new_df = pd.DataFrame(new_np, index = self.indices, columns = ['f1','f2'])
+        return new_df
+
+    def get_pairwise_dis(self,new_df = None, top5_index = None,return_paird = False, req_top = 5):
+        if new_df is None:
+            new_df = self.new_df
+        if top5_index is None:
+            top5_index = new_df.index
+        pair_d = pairwise_distances(new_df, new_df.loc[top5_index], n_jobs=-1)
+        ## sum(axis = 1) or along dimension first dim or 0 index dim
+        temp = pd.DataFrame(pair_d, index = self.indices, columns = top5_index )
+        temp['sum'] = temp.sum(axis = 1)
+        temp = temp.sort_values(by = 'sum')
+        ## sort them and get top
+        if return_paird:
+            return pair_d
+        return temp.index[:req_top]
+
+
+###################### Filtering data based on selected features #######
+
+class FilteredData:
+    def __init__(self,main_df,selected_state,selected_price,selected_bedrooms, selected_bathrooms):
+        self.main_df = main_df
+        self.selected_state = selected_state
+        self.selected_price = selected_price
+        self.selected_bedrooms = selected_bedrooms
+        self.selected_bathrooms = selected_bathrooms
+        self.filtered_data = self._filter_function()
+    def _filter_function(self):
+
+        filtered_data = self.main_df[
+            (self.main_df['state'] == self.selected_state) &
+            #(self.main_df['bedrooms'] == self.selected_bedrooms)&
+            (self.main_df['price']>=self.selected_price[0]) &
+            (self.main_df['price']<= self.selected_price[1])
+            #&(self.main_df['bathrooms']== self.selected_bathrooms)
+        ]
+        return filtered_data

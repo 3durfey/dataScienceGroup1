@@ -5,7 +5,7 @@ import pandas as pd
 
 import streamlit as st
 from dotenv import load_dotenv
-from utils.jagath import Clean, create_half_bathrooms
+from utils.jagath import Clean, create_half_bathrooms, PCA_PAIRWISE
 from utils.peter import CleanCityname
 from utils.b2 import B2
 from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
@@ -98,16 +98,48 @@ with col5:
 with col6:
     bathroom_rate = st.selectbox('Bathroom rating',range(1,11))
 
+def display_apartments(data):
+
+    for _, row in data.iterrows():
+        st.markdown("---")  # Horizontal line to separate listings
+        st.markdown(f"## 🏢 {row['title']}")  # Title of the apartment
+        
+        with st.container():
+            col1, col2 = st.columns([2, 1])  # Adjusting column width ratios for better layout
+            
+            # Left column details
+            with col1:
+                st.markdown(f"**Description:** {row['body']}")
+                st.markdown(f"**Square Feet:** {row['square_feet']} sqft")
+                st.markdown(f"**Bedrooms:** {row['bedrooms']} 🛏️")
+                st.markdown(f"**Bathrooms:** {row['bathrooms']} 🛁")
+                st.markdown(f"**Half Bathrooms:** {row['half_bathrooms']}")
+                st.markdown(f"**Price:** ${row['price']:,.2f}")
+                st.markdown(f"**Price Type:** {row['price_type']} ({row['currency']})")
+                st.markdown(f"**Fee:** ${row['fee']}")
+                st.markdown(f"**Address:** {row['address']}, {row['cityname']}, {row['state']}")
+                st.markdown(f"**Source:** {row['source']}")
+                st.markdown(f"**Time Listed:** {row['time']}")
+            
+            # Right column details
+            with col2:
+                st.markdown(f"**Amenities:** {row['amenities']}")
+                st.markdown(f"**Pets Allowed:** {'Yes' if row['pets_allowed'] else 'No'}")
+                st.markdown(f"**Cats Allowed:** {'Yes' if row['cats_allowed'] else 'No'}")
+                st.markdown(f"**Dogs Allowed:** {'Yes' if row['dogs_allowed'] else 'No'}")
+                st.markdown(f"**Has Photo:** {'Yes' if row['has_photo'] else 'No'}")
+                st.markdown(f"**Latitude:** {row['latitude']}")
+                st.markdown(f"**Longitude:** {row['longitude']}")
 
 # Button to apply filters
 if st.button("Show Filtered Apartments"):
     # Filter the data based on selections
     filtered_data = df_cleaned1[
         (df_cleaned1['state'] == selected_state) &
-        (df_cleaned1['bedrooms'] == selected_bedrooms)&
+        #(df_cleaned1['bedrooms'] == selected_bedrooms)&
         (df_cleaned1['price']>=selected_price[0]) &
-        (df_cleaned1['price']<= selected_price[1]) &
-        (df_cleaned1['bathrooms']== selected_bathrooms)
+        (df_cleaned1['price']<= selected_price[1])
+        #&(df_cleaned1['bathrooms']== selected_bathrooms)
     ]
 
     # Display the filtered data as a single-row table
@@ -121,55 +153,60 @@ if st.button("Show Filtered Apartments"):
 #-------------------------------------------------------------------------
 
 
-    # Assuming `df_cleaned1` is already available and contains all the columns provided
-    # Ensure `df_cleaned1` is a pandas DataFrame
-    df_cleaned1 = pd.DataFrame(filtered_data)
+    # Assuming `df_filtered` is already available and contains all the columns provided
+    # Ensure `df_filtered` is a pandas DataFrame
+    df_filtered = pd.DataFrame(filtered_data)
+    ### Adding the scoring system/methods
+    bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
+    bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
+    np_score = bedroom_dis.apply_score() + bathroom_dis.apply_score()
+    df_filtered['score'] = np_score
+    df_filtered = df_filtered.sort_values(by = 'score', ascending= False)
+    #### df_cleaned1 is sorted based on the score
     if df_cleaned1.empty:
         st.error("No data available to display.")
         st.stop()  # Stop the script execution if no data
     # Function to display apartments in a custom card-like format
-    def display_apartments(data):
-        
-        for _, row in data.iterrows():
-            st.markdown("---")  # Horizontal line to separate listings
-            st.markdown(f"## 🏢 {row['title']}")  # Title of the apartment
-            
-            with st.container():
-                col1, col2 = st.columns([2, 1])  # Adjusting column width ratios for better layout
-                
-                # Left column details
-                with col1:
-                    st.markdown(f"**Description:** {row['body']}")
-                    st.markdown(f"**Square Feet:** {row['square_feet']} sqft")
-                    st.markdown(f"**Bedrooms:** {row['bedrooms']} 🛏️")
-                    st.markdown(f"**Bathrooms:** {row['bathrooms']} 🛁")
-                    st.markdown(f"**Half Bathrooms:** {row['half_bathrooms']}")
-                    st.markdown(f"**Price:** ${row['price']:,.2f}")
-                    st.markdown(f"**Price Type:** {row['price_type']} ({row['currency']})")
-                    st.markdown(f"**Fee:** ${row['fee']}")
-                    st.markdown(f"**Address:** {row['address']}, {row['cityname']}, {row['state']}")
-                    st.markdown(f"**Source:** {row['source']}")
-                    st.markdown(f"**Time Listed:** {row['time']}")
-                
-                # Right column details
-                with col2:
-                    st.markdown(f"**Amenities:** {row['amenities']}")
-                    st.markdown(f"**Pets Allowed:** {'Yes' if row['pets_allowed'] else 'No'}")
-                    st.markdown(f"**Cats Allowed:** {'Yes' if row['cats_allowed'] else 'No'}")
-                    st.markdown(f"**Dogs Allowed:** {'Yes' if row['dogs_allowed'] else 'No'}")
-                    st.markdown(f"**Has Photo:** {'Yes' if row['has_photo'] else 'No'}")
-                    st.markdown(f"**Latitude:** {row['latitude']}")
-                    st.markdown(f"**Longitude:** {row['longitude']}")
-
+   
     # Pagination controls
     rows_per_page = 5  # Change this to control how many rows per page
-    total_pages = -(-len(df_cleaned1) // rows_per_page)  # Ceiling division
+    total_pages = -(-len(df_filtered) // rows_per_page)  # Ceiling division
     current_page = st.number_input("Page", min_value=1, max_value=total_pages, step=1, value=1)
 
     # Get the data for the current page
     start_row = (current_page - 1) * rows_per_page
     end_row = start_row + rows_per_page
-    df_paginated = df_cleaned1.iloc[start_row:end_row]
-
+    df_paginated = df_filtered.iloc[start_row:end_row]
+       ##need the top5 indices for PCA calculation
     # Display the paginated data in a custom format
     display_apartments(df_paginated)
+
+
+#---------------------------------------------------------------------------------------------------------
+#                            GET SIMILAR APARTMENT 
+#---------------------------------------------------------------------------------------------------------
+
+
+
+from utils.jagath import FilteredData
+
+if st.button('More Recommended Apartments'):
+    FD = FilteredData(df_cleaned1, selected_state,selected_price,selected_bedrooms, selected_bathrooms)
+    filtered_data = FD.filtered_data
+    df_filtered = pd.DataFrame(filtered_data)
+
+    ##### repeated code block can be further reduced to a function in ScoreDistribution class###### need to work on it
+    bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
+    bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
+    np_score = bedroom_dis.apply_score() + bathroom_dis.apply_score()
+    df_filtered['score'] = np_score
+    df_filtered = df_filtered.sort_values(by = 'score', ascending= False)
+    ###################################
+
+
+    PPP = PCA_PAIRWISE(df_cleaned1)
+    top5_indices = df_filtered.index[:5]
+    top_similar = PPP.get_pairwise_dis(top5_index= top5_indices)
+    
+    display_apartments(df_cleaned1.loc[top_similar])
+
