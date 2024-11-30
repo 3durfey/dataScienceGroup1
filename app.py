@@ -9,7 +9,7 @@ from utils.jagath import Clean, create_half_bathrooms, PCA_PAIRWISE
 from utils.peter import CleanCityname
 from utils.b2 import B2
 from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
- 
+import datetime
  
 # ------------------------------------------------------
 #                      APP CONSTANTS
@@ -94,9 +94,9 @@ with col4:
 )
 col5,col6 = st.columns(2)
 with col5:
-    bedroom_rate = st.selectbox('Bedroom rating',range(1,11))
+    bedroom_rate = st.selectbox('Bedroom rating',range(10,0,-1))
 with col6:
-    bathroom_rate = st.selectbox('Bathroom rating',range(1,11))
+    bathroom_rate = st.selectbox('Bathroom rating',range(10,0,-1))
 
 def display_apartments(data):
 
@@ -119,7 +119,7 @@ def display_apartments(data):
                 st.markdown(f"**Fee:** ${row['fee']}")
                 st.markdown(f"**Address:** {row['address']}, {row['cityname']}, {row['state']}")
                 st.markdown(f"**Source:** {row['source']}")
-                st.markdown(f"**Time Listed:** {row['time']}")
+                st.markdown(f"**Time Listed:** {datetime.datetime.fromtimestamp(row['time'])}")
             
             # Right column details
             with col2:
@@ -209,4 +209,3 @@ if st.button('More Recommended Apartments'):
     top_similar = PPP.get_pairwise_dis(top5_index= top5_indices)
     
     display_apartments(df_cleaned1.loc[top_similar])
-

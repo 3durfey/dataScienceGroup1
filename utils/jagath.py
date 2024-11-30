@@ -123,3 +123,51 @@ class FilteredData:
             #&(self.main_df['bathrooms']== self.selected_bathrooms)
         ]
         return filtered_data
+    
+
+
+    ####################### Simple Search based on column names #########
+
+import re
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+
+class Simple_Search():
+    
+    def __init__(self, df, column_name = ['title','address','cityname']):
+        
+        self.df = df.copy()
+        self.column_name = column_name
+        self._clean_column_text()
+        self._cv_matrix()
+
+    def _clean_column_text(self):
+        
+        if isinstance(self.column_name, list):
+            self.df.loc[:,self.column_name] = self.df.loc[:,self.column_name].apply(lambda s: re.sub(r'[$,.:\/|%&*]','',s) if isinstance(s, str) else s)
+        else:
+            self.df.loc[ :,[self.column_name]] = self.df.loc[:,[self.column_name]].apply(lambda s: re.sub(r'[$,.:/\|$%&]', '', s) if isinstance(s, str) else s )
+        try:
+            self.df['all_text'] = self.df.apply( lambda row: f"{row['title']} "
+                                        f"{row['address'] if pd.notna(row['address']) else ''} "
+                                        f"{row['cityname'] if pd.notna(row['cityname']) else ''}",
+                                        axis=1)
+            self.column_name = 'all_text'
+        except:
+            self.column_name = 'title'
+
+    
+    def _cv_matrix(self):
+        corpus = []
+        if self.column_name in self.df.columns:
+            for i in self.df.index:
+                corpus.append(self.df[self.column_name][i])
+        self.cv = CountVectorizer(max_df=0.9, min_df=1, ngram_range=(1, 2))
+        self.X =  self.cv.fit_transform(corpus)
+
+    def get_top5_indices(self,text, top = 5):
+        
+        input_vector = self.cv.transform([text])
+        scores = cosine_similarity(input_vector, self.X)
+        return scores.argsort()[0][-1:-(top+1):-1]
