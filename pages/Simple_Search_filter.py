@@ -23,7 +23,11 @@ if search_query:
     # scores = cosine_similarity(input_vector, CV_matrix())
     # idxs = scores.argsort()[0][-1:-6:-1]
     idxs = ss.get_top5_indices(search_query)
-    data = df_cleaned1.loc[idxs,:]
+    idxs = [i for i in idxs if i in df_cleaned1.index]
+    try:
+        data = df_cleaned1.loc[idxs,:]
+    except:
+        st.write('No relevant Apartments')
     display_apartments(data)
 
 else:
