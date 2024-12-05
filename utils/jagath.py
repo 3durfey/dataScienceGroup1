@@ -166,8 +166,11 @@ class Simple_Search():
         self.cv = CountVectorizer(max_df=0.9, min_df=1, ngram_range=(1, 2))
         self.X =  self.cv.fit_transform(corpus)
 
-    def get_top5_indices(self,text, top = 5):
+    def get_top5_indices(self,text, top = 5, threshold = 0.1):
         
         input_vector = self.cv.transform([text])
         scores = cosine_similarity(input_vector, self.X)
-        return scores.argsort()[0][-1:-(top+1):-1]
+        if (scores>=threshold).sum():
+            #### Need to use the score-sorted to get the apartments only if their score is greater than threshold
+            return scores.argsort()[0][-1:-(top+1):-1]
+        return None
