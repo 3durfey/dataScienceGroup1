@@ -129,48 +129,79 @@ class FilteredData:
     ####################### Simple Search based on column names #########
 
 import re
+import pandas as pd
+import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-
 class Simple_Search():
     
-    def __init__(self, df, column_name = ['title','address','cityname']):
-        
-        self.df = df.copy()
+    def __init__(self, df, column_name=['title', 'address', 'cityname']):
+        self.original_index = df.index.copy()  # Store the original index
+        self.df = df.copy().reset_index(drop=True)  # Reset index to ensure consistent indexing
         self.column_name = column_name
         self._clean_column_text()
         self._cv_matrix()
 
     def _clean_column_text(self):
-        
+        # Clean text columns
         if isinstance(self.column_name, list):
-            self.df.loc[:,self.column_name] = self.df.loc[:,self.column_name].apply(lambda s: re.sub(r'[$,.:\/|%&*]','',s) if isinstance(s, str) else s)
+            self.df.loc[:,self.column_name] = self.df.loc[:,self.column_name].apply(lambda s: re.sub(r'[$,.:\/|%&*]','',str(s)) if pd.notna(s) else s)
         else:
-            self.df.loc[ :,[self.column_name]] = self.df.loc[:,[self.column_name]].apply(lambda s: re.sub(r'[$,.:/\|$%&]', '', s) if isinstance(s, str) else s )
+            self.df.loc[ :,[self.column_name]] = self.df.loc[:,[self.column_name]].apply(lambda s: re.sub(r'[$,.:/\|$%&]', '', str(s)) if pd.notna(s) else s)
+        
         try:
-            self.df['all_text'] = self.df.apply( lambda row: f"{row['title']} "
-                                        f"{row['address'] if pd.notna(row['address']) else ''} "
-                                        f"{row['cityname'] if pd.notna(row['cityname']) else ''}",
-                                        axis=1)
+            # Create combined text column
+            self.df['all_text'] = self.df.apply(
+                lambda row: f"{row['title']} "
+                            f"{row['address'] if pd.notna(row['address']) else ''} "
+                            f"{row['cityname'] if pd.notna(row['cityname']) else ''}",
+                axis=1
+            )
             self.column_name = 'all_text'
         except:
             self.column_name = 'title'
 
-    
     def _cv_matrix(self):
-        corpus = []
-        if self.column_name in self.df.columns:
-            for i in self.df.index:
-                corpus.append(self.df[self.column_name][i])
+        # Create corpus and vectorizer
+        corpus = self.df[self.column_name].tolist()
         self.cv = CountVectorizer(max_df=0.9, min_df=1, ngram_range=(1, 2))
-        self.X =  self.cv.fit_transform(corpus)
+        self.X = self.cv.fit_transform(corpus)
 
-    def get_top5_indices(self,text, top = 5, threshold = 0.1):
-        
+    def get_top5_indices(self, text, top=5, threshold=0.1):
+        # Transform input text
         input_vector = self.cv.transform([text])
-        scores = cosine_similarity(input_vector, self.X)
-        if (scores>=threshold).sum():
-            #### Need to use the score-sorted to get the apartments only if their score is greater than threshold
-            return scores.argsort()[0][-1:-(top+1):-1]
+        
+        # Calculate cosine similarity
+        scores = cosine_similarity(input_vector, self.X)[0]
+        
+        # Filter and sort results
+        filtered_indices = np.where(scores >= threshold)[0]
+        
+        if len(filtered_indices) > 0:
+            # Sort filtered indices by score in descending order
+            sorted_local_indices = filtered_indices[np.argsort(scores[filtered_indices])[::-1]]
+            
+            # Take top results, limited by 'top' parameter
+            top_local_indices = sorted_local_indices[:top]
+            
+            # Map local indices back to original DataFrame index
+            return self.original_index[top_local_indices].tolist()
+        
         return None
+
+    def search(self, text, top=5, threshold=0.1):
+        """
+        Convenience method to return actual DataFrame rows for top matches
+        
+        :param text: Search text
+        :param top: Number of top results to return
+        :param threshold: Minimum similarity threshold
+        :return: DataFrame of top matching rows
+        """
+        top_indices = self.get_top5_indices(text, top, threshold)
+        
+        if top_indices is not None:
+            return self.df.loc[top_indices]
+        
+        return pd.DataFrame()  # Return empty DataFrame if no matches
