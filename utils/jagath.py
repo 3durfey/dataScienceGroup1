@@ -28,8 +28,14 @@ def Clean(df):
     #clean_df.reset_index(drop  = True,inplace = True)
     clean_df = create_half_bathrooms(clean_df)
     clean_df = clean_df.fillna({'bathrooms':0, 'bedrooms':0, 'state':'ZZ'})
-
-    print(f'Data cleaning is success, returning clean_df')
+    cleaned = clean_df[
+        ~(clean_df['cityname'].isnull() | 
+        clean_df['cityname'].str.contains(r'\d', na=False) | 
+        clean_df['cityname'].str.contains(r'[^a-zA-Z\s]', na=False))
+    ]
+    # Drop rows where any of the specified columns have null values
+    clean_df = cleaned.dropna(subset=['state', 'latitude', 'longitude'])
+    # Display the updated DataFrame to verify the changes
     return clean_df
 
 def create_half_bathrooms(df):

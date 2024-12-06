@@ -2,20 +2,18 @@ import os
 import pickle
 from io import StringIO
 import pandas as pd
-
 import streamlit as st
 from dotenv import load_dotenv
-from utils.jagath import Clean, create_half_bathrooms, PCA_PAIRWISE
-from utils.peter import CleanCityname
+from utils.jagath import Clean, create_half_bathrooms
 from utils.b2 import B2
 from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
-import datetime
+ 
  
 # ------------------------------------------------------
 #                      APP CONSTANTS
 # ------------------------------------------------------
-REMOTE_DATA = 'apartments_for_rent_classified_10K.csv'
-PREDICTED_PRICES = 'predicted_price.csv' 
+PICKLE_REMOTE_DATA = "df_apartments_100k.pickle"
+PICKLE_PREDICTED_PRICE = "df_price_prediction.pickle"
  
 # ------------------------------------------------------
 #                        CONFIG
@@ -39,25 +37,22 @@ def get_data(NAME):
 
  
 @st.cache_resource
-def get_model():
-    with open('./model.pickle', 'rb') as f:
+def get_model(NAME):
+    with open(NAME, 'rb') as f:
         analyzer = pickle.load(f)
-   
     return analyzer
- 
 # ------------------------------------------------------
 #                         APP
 # ------------------------------------------------------
  
-df_apartments = get_data(REMOTE_DATA)
-df_price_prediction = get_data(PREDICTED_PRICES)
+df_apartments = get_data(PICKLE_REMOTE_DATA)
+df_price_prediction = get_data(PICKLE_PREDICTED_PRICE)
 
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
 
-df_cleaned0 = Clean(df_apartments)
-df_cleaned1 = CleanCityname(df_cleaned0)
+df_cleaned1 = Clean(df_apartments)
  
 # ------------------------------
 # Layout for Filters: State and Bedrooms , Price and Bathrooms
@@ -119,7 +114,7 @@ def display_apartments(data):
                 st.markdown(f"**Fee:** ${row['fee']}")
                 st.markdown(f"**Address:** {row['address']}, {row['cityname']}, {row['state']}")
                 st.markdown(f"**Source:** {row['source']}")
-                st.markdown(f"**Time Listed:** {datetime.datetime.fromtimestamp(row['time'])}")
+                st.markdown(f"**Time Listed:** {row['time']}")
             
             # Right column details
             with col2:
@@ -130,24 +125,62 @@ def display_apartments(data):
                 st.markdown(f"**Has Photo:** {'Yes' if row['has_photo'] else 'No'}")
                 st.markdown(f"**Latitude:** {row['latitude']}")
                 st.markdown(f"**Longitude:** {row['longitude']}")
-
+#inialize so no error onload
+filtered_data = []
+if "data" not in st.session_state:
+    st.session_state.data = []
 # Button to apply filters
 if st.button("Show Filtered Apartments"):
     # Filter the data based on selections
     filtered_data = df_cleaned1[
-        (df_cleaned1['state'] == selected_state) &
-        #(df_cleaned1['bedrooms'] == selected_bedrooms)&
-        (df_cleaned1['price']>=selected_price[0]) &
-        (df_cleaned1['price']<= selected_price[1])
-        #&(df_cleaned1['bathrooms']== selected_bathrooms)
+    (df_cleaned1['state'] == selected_state) &
+    #(df_cleaned1['bedrooms'] == selected_bedrooms)&
+    (df_cleaned1['price']>=selected_price[0]) &
+    (df_cleaned1['price']<= selected_price[1])]
+    #&(df_cleaned1['bathrooms']== selected_bathrooms)
+    chunk_size = 5
+    # Split the DataFrame into chunks of 5 rows each
+    df_chunks = [
+        filtered_data.iloc[i:i + chunk_size]
+        for i in range(0, len(filtered_data), chunk_size)
     ]
+    # Store the list of DataFrames in session state
+    st.session_state.data = df_chunks  # Overwrite with the new chunks
+    
 
     # Display the filtered data as a single-row table
     st.write(f"Apartments in {selected_state} with {selected_bedrooms} bedrooms:")
-    st.write("first")
 
+#-------------------------------------------------------------------------
+#               SHOW APARTMENTS FROM FILTERED
+#-------------------------------------------------------------------------
 
+if "counter" not in st.session_state:
+    st.session_state.counter = 0 
 
+# Function to increment the counter
+def increment_counter():
+    if (st.session_state.counter < (len(st.session_state.data) - 1)):
+        st.session_state.counter += 1  # Update session state variable
+
+# Function to decrement the counter
+def decrement_counter():
+    if st.session_state.counter > 0:  # Prevent negative values
+        st.session_state.counter -= 1
+
+if len(st.session_state.data) > 0:
+    # Layout for the buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Previous"):
+            decrement_counter()
+    with col2:
+        if st.button("Next"):
+            increment_counter()
+            
+# Check if the session state data has chunks and the counter is within range
+if "data" in st.session_state and len(st.session_state.data) > 0:
+    display_apartments(st.session_state.data[st.session_state.counter])
 #-------------------------------------------------------------------------
 #               GET SCORE BASED TOP APARTMENTS
 #-------------------------------------------------------------------------
