@@ -13,7 +13,6 @@ from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution
 #                      APP CONSTANTS
 # ------------------------------------------------------
 PICKLE_REMOTE_DATA = "df_apartments_100k.pickle"
-PICKLE_PREDICTED_PRICE = "df_price_prediction.pickle"
  
 # ------------------------------------------------------
 #                        CONFIG
@@ -47,7 +46,6 @@ def get_model(NAME):
 # ------------------------------------------------------
  
 df_apartments = get_data(PICKLE_REMOTE_DATA)
-df_price_prediction = get_data(PICKLE_PREDICTED_PRICE)
 
 #get zip file 
 import io
@@ -57,16 +55,8 @@ zip_file = io.BytesIO(zip_data)
 
 # Extract the ZIP contents in-memory
 with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-    file_list = zip_ref.namelist()  # List of files in the ZIP
-    print("Files in ZIP:", file_list)
-    
-    # Assuming the model file is named "random_forest_model.pkl" in the ZIP
-    if "random_forest_model.pkl" in file_list:
-        with zip_ref.open("random_forest_model.pkl") as model_file:
+    with zip_ref.open("random_forest_model.pkl") as model_file:
             sqft_model = pickle.load(model_file)
-            print("Model loaded successfully!")
-    else:
-        print("Model file not found in the ZIP.")
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
