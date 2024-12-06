@@ -38,9 +38,10 @@ def get_data(NAME):
  
 @st.cache_resource
 def get_model(NAME):
-    with open(NAME, 'rb') as f:
-        analyzer = pickle.load(f)
-    return analyzer
+    # collect data frame of reviews and their sentiment
+    b2.set_bucket(os.environ['B2_BUCKETNAME'])
+    model = b2.get_model(NAME)
+    return model
 # ------------------------------------------------------
 #                         APP
 # ------------------------------------------------------
@@ -48,6 +49,24 @@ def get_model(NAME):
 df_apartments = get_data(PICKLE_REMOTE_DATA)
 df_price_prediction = get_data(PICKLE_PREDICTED_PRICE)
 
+#get zip file 
+import io
+import zipfile
+zip_data = get_model("random_forest_model.pkl.zip")
+zip_file = io.BytesIO(zip_data)
+
+# Extract the ZIP contents in-memory
+with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+    file_list = zip_ref.namelist()  # List of files in the ZIP
+    print("Files in ZIP:", file_list)
+    
+    # Assuming the model file is named "random_forest_model.pkl" in the ZIP
+    if "random_forest_model.pkl" in file_list:
+        with zip_ref.open("random_forest_model.pkl") as model_file:
+            sqft_model = pickle.load(model_file)
+            print("Model loaded successfully!")
+    else:
+        print("Model file not found in the ZIP.")
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
@@ -149,7 +168,7 @@ if st.button("Show Filtered Apartments"):
     
 
     # Display the filtered data as a single-row table
-    st.write(f"Apartments in {selected_state} with {selected_bedrooms} bedrooms:")
+    #st.write(f"Apartments in {selected_state} with {selected_bedrooms} bedrooms:")
 
 #-------------------------------------------------------------------------
 #               SHOW APARTMENTS FROM FILTERED
@@ -222,12 +241,14 @@ if "data" in st.session_state and len(st.session_state.data) > 0:
 
 
 from utils.jagath import FilteredData
-
+st.write("testst")
 if st.button('More Recommended Apartments'):
+    st.write("fdswfasdfsdfdsfsdfsdf")
+
     FD = FilteredData(df_cleaned1, selected_state,selected_price,selected_bedrooms, selected_bathrooms)
     filtered_data = FD.filtered_data
     df_filtered = pd.DataFrame(filtered_data)
-
+    st.write(df_filtered)
     ##### repeated code block can be further reduced to a function in ScoreDistribution class###### need to work on it
     bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
     bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)

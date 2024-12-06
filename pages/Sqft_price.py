@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from app import df_cleaned1 as df
-
+from app import sqft_model
 # Creating a price_per_sqft column  in df
 df['price_per_sqft'] = df['price'] / df['square_feet']
 df = df.dropna(subset=['price_per_sqft'])
@@ -22,8 +22,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model_columns = X_train.columns
 
 # Train model
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+model = sqft_model
 
 
 def predict_house_price(square_feet, bedrooms, bathrooms, cityname):
