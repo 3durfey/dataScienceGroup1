@@ -48,18 +48,19 @@ class B2(object):
     def get_df(self, remote_path):
         # Get file
         obj = self.bucket.Object(remote_path)
-        
         # Get the raw content of the file
         content = obj.get()['Body'].read()
-        
-        # Detect encoding
-        detected_encoding = chardet.detect(content)['encoding']
-        print(f"Detected encoding: {detected_encoding}")
-        
-        # Read the CSV using the detected encoding and a new BytesIO object
-        df = pd.read_csv(BytesIO(content), encoding=detected_encoding, on_bad_lines='skip', sep=';')
+        # Load the content as a DataFrame from the pickle file
+        df = pd.read_pickle(BytesIO(content))
         return df
     
+    def get_model(self, remote_path):
+       # Get file
+        obj = self.bucket.Object(remote_path)
+        # Get the raw content of the file
+        df = obj.get()['Body'].read()
+        return df
+            
     def get_object(self, remote_path):
         obj = self.bucket.Object(remote_path)
         return obj.get()['Body']
