@@ -14,8 +14,8 @@ import datetime
 # ------------------------------------------------------
 #                      APP CONSTANTS
 # ------------------------------------------------------
-REMOTE_DATA = 'apartments_for_rent_classified_10K.csv'
-PREDICTED_PRICES = 'predicted_price.csv' 
+REMOTE_DATA = 'apartments_for_rent_classified_100K.csv'
+# PREDICTED_PRICES = 'predicted_price.csv' 
  
 # ------------------------------------------------------
 #                        CONFIG
@@ -50,7 +50,7 @@ def get_model():
 # ------------------------------------------------------
  
 df_apartments = get_data(REMOTE_DATA)
-df_price_prediction = get_data(PREDICTED_PRICES)
+# df_price_prediction = get_data(PREDICTED_PRICES)
 
 # ------------------------------
 # PART 1 : Filter Data
