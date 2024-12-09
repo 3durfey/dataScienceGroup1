@@ -25,7 +25,7 @@ if search_query:
     idxs = ss.get_top5_indices(search_query)
     try:
         idxs = [i for i in idxs if i in df_cleaned1.index]
-        data = df_cleaned1.loc[idxs,:]
+        data = df_cleaned1.iloc[idxs,:]
         display_apartments(data)
     except:
         st.write('No relevant Apartments')
