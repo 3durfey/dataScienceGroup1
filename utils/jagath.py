@@ -1,11 +1,12 @@
-#### dataclean functions #######
+import re
 import pandas as pd
 import numpy as np
-import re
+from sklearn.metrics import pairwise_distances
+from sklearn.decomposition import PCA
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-import re
-
-
+################################### Clean and create_half_bedrooms ################################
 
 def Clean(df):
     """
@@ -25,7 +26,6 @@ def Clean(df):
     if 'dogs_allowed' not in clean_df.columns:
         clean_df['dogs_allowed'] = clean_df['pets_allowed'].isin({'Cats,Dogs', 'Dogs'})
 
-    #clean_df.reset_index(drop  = True,inplace = True)
     clean_df = create_half_bathrooms(clean_df)
     clean_df = clean_df.fillna({'bathrooms':0, 'bedrooms':0, 'state':'ZZ'})
 
@@ -41,29 +41,32 @@ def create_half_bathrooms(df):
                     df.loc[r,'half_bathrooms'] = 1
                     df.loc[r,'bathrooms'] = float(int(df.loc[r,'bathrooms']))
             except:
-                #print(f'error occured at {r}')
                 continue
     return df
 
-
-
 ############################################## PCA and Pairwise matrix ###############
-
-import numpy as np
-import pandas as pd
-from sklearn.metrics import pairwise_distances
-from sklearn.decomposition import PCA
 
 COLUMNS_CONSIDERED = ['bathrooms', 'bedrooms', 'price', 'square_feet', 'state', 'latitude', 'longitude', 'cats_allowed', 'dogs_allowed']
 class PCA_PAIRWISE:
     def __init__(self, clean_df):
-        print(f'Available function "_get_df_numeric_columns","_perform_pca" and "get_pairwise_dis" ')
+        """_Takes Apartment Dataframe to calculate PCA with two features and later can be used to get pairwise distances
+
+        Args:
+            clean_df (_type_): a clean_df is preferred and Columns considered are ['bathrooms', 'bedrooms', 'price',
+              'square_feet', 'state', 'latitude', 'longitude', 'cats_allowed', 'dogs_allowed'] for PCA calculation
+        """
         self.clean_df = clean_df.copy()
         self.pcadf = self._get_df_numeric_columns()
         self.indices = self.pcadf.index
         self.new_df = self._perform_pca(self.pcadf)
 
     def _get_df_numeric_columns(self):
+        """
+        Take a DataFrame and return numeric columns of the dataframe
+
+        Returns:
+          Numerics columned DataFrame
+        """
         pcadf = self.clean_df
         pcadf = pcadf.fillna({'bathrooms':0., 'bedrooms':0., 'state':'NAN'})
         all_columns = pcadf.columns
@@ -80,6 +83,15 @@ class PCA_PAIRWISE:
 
 
     def _perform_pca(self,pcadf):
+        """
+        Takes numeric columns Dataframe to return PCA dataframe
+
+        Args:
+            pcadf (pandas.DataFrame):  only float(or int) columned Dataframe 
+
+        Returns:
+            PCA dataframe with two features
+        """
         pca = PCA()
         new_np= pca.fit_transform(pcadf)
         #sigma_variance = pca.explained_variance_ratio_
@@ -88,12 +100,24 @@ class PCA_PAIRWISE:
         return new_df
 
     def get_pairwise_dis(self,new_df = None, top5_index = None,return_paird = False, req_top = 5):
+        """
+        Calculates pairwise distances and return indices of the top req_top indices 
+
+        Args:
+            new_df (_type_, optional): Dataframe on which pairwise is performed. Defaults to PCA dataframe from object.
+            top5_index (_type_, optional): Pairwise distances with respect to top5_index is provided. Defaults to None.
+            return_paird (bool, optional): True when Pairwise distances is required. Defaults to False.
+            req_top (int, optional): _description_. Defaults to 5.
+
+        Returns:
+            Index object of req_top indices
+        """
         if new_df is None:
             new_df = self.new_df
         if top5_index is None:
             top5_index = new_df.index
         pair_d = pairwise_distances(new_df, new_df.loc[top5_index], n_jobs=-1)
-        ## sum(axis = 1) or along dimension first dim or 0 index dim
+        ## sum(axis = 1) or along columns
         temp = pd.DataFrame(pair_d, index = self.indices, columns = top5_index )
         temp['sum'] = temp.sum(axis = 1)
         temp = temp.sort_values(by = 'sum')
@@ -103,39 +127,18 @@ class PCA_PAIRWISE:
         return temp.index[:req_top]
 
 
-###################### Filtering data based on selected features #######
 
-class FilteredData:
-    def __init__(self,main_df,selected_state,selected_price,selected_bedrooms, selected_bathrooms):
-        self.main_df = main_df
-        self.selected_state = selected_state
-        self.selected_price = selected_price
-        self.selected_bedrooms = selected_bedrooms
-        self.selected_bathrooms = selected_bathrooms
-        self.filtered_data = self._filter_function()
-    def _filter_function(self):
+############################################ Simple Search based on column names #########
 
-        filtered_data = self.main_df[
-            (self.main_df['state'] == self.selected_state) &
-            #(self.main_df['bedrooms'] == self.selected_bedrooms)&
-            (self.main_df['price']>=self.selected_price[0]) &
-            (self.main_df['price']<= self.selected_price[1])
-            #&(self.main_df['bathrooms']== self.selected_bathrooms)
-        ]
-        return filtered_data
-    
-
-
-    ####################### Simple Search based on column names #########
-
-import re
-import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
- 
 class Simple_Search():
     def __init__(self, df, column_name = ['title','address','cityname']):
+        """
+        Dataframe is required when initializing Simple_Search class, columns are optional
+
+        Args:
+            df (pd.DataFrame): df on which Simple Search needs to be performed
+            column_name (list, optional):  Defaults to ['title','address','cityname'].
+        """
         self.df = df.copy()
         self.indices = self.df.index
         self.column_name = column_name
@@ -143,6 +146,9 @@ class Simple_Search():
         self._cv_matrix()
  
     def _clean_column_text(self):
+        """
+        Removed special characters and combines all columns mentioned when initializing the object
+        """
         if isinstance(self.column_name, list):
             self.df.loc[:,self.column_name] = self.df.loc[:,self.column_name].apply(lambda s: re.sub(r'[$,.:\/|%&*]','',s) if isinstance(s, str) else s)
         else:
@@ -157,6 +163,9 @@ class Simple_Search():
             self.column_name = 'title'
  
     def _cv_matrix(self):
+        """
+        fits a Count Vectorizer and stores within the class
+        """
         corpus = []
         if self.column_name in self.df.columns:
             for i in self.df.index:
@@ -166,12 +175,20 @@ class Simple_Search():
  
 
     def get_top5_indices(self,text, top = 5, threshold = 0.1):
+        """
+        Return Indices of rows in df which are similar to text query. 
+
+        Args:
+            text (str): text query
+            top (int, optional): Required number of indices. Defaults to 5.
+            threshold (float, optional): cosine similairty threshold to consider returning indices. Defaults to 0.1.
+
+        Returns:
+            _type_: _description_
+        """
         input_vector = self.cv.transform([text])
         scores = cosine_similarity(input_vector, self.X)
-#         return scores   #### remove later
         if (scores>=threshold).sum():
-            #### Need to use the score-sorted to get the apartments only if their score is greater than threshold
             idx = scores.argsort()[0][-1:-(top+1):-1]
             return idx  
-#             return [self.indices[i] for i in idx]
         return None

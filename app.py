@@ -5,7 +5,7 @@ import pandas as pd
 
 import streamlit as st
 from dotenv import load_dotenv
-from utils.jagath import Clean, create_half_bathrooms, PCA_PAIRWISE
+from utils.jagath import Clean, PCA_PAIRWISE
 from utils.peter import CleanCityname
 from utils.b2 import B2
 from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
@@ -136,10 +136,8 @@ if st.button("Show Filtered Apartments"):
     # Filter the data based on selections
     filtered_data = df_cleaned1[
         (df_cleaned1['state'] == selected_state) &
-        #(df_cleaned1['bedrooms'] == selected_bedrooms)&
         (df_cleaned1['price']>=selected_price[0]) &
         (df_cleaned1['price']<= selected_price[1])
-        #&(df_cleaned1['bathrooms']== selected_bathrooms)
     ]
 
     # Display the filtered data as a single-row table
