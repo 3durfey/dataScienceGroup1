@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
@@ -22,7 +23,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model_columns = X_train.columns
 
 # Train model
-model = sqft_model
+with open('randomforestmodel_2.pkl','rb') as f:
+    print('Success with loading random forest model')
+    model = pickle.load(f)
 
 
 def predict_house_price(square_feet, bedrooms, bathrooms, cityname):
