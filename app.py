@@ -7,13 +7,15 @@ from dotenv import load_dotenv
 from utils.jagath import Clean, create_half_bathrooms
 from utils.b2 import B2
 from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
- 
+from io import BytesIO
+import io
+import zipfile
  
 # ------------------------------------------------------
 #                      APP CONSTANTS
 # ------------------------------------------------------
-PICKLE_REMOTE_DATA = "df_apartments_100k.pickle"
- 
+PICKLE_REMOTE_DATA = "10k_data.pickle"
+PREDICTED_PRICES = 'df_price_prediction.pickle' 
 # ------------------------------------------------------
 #                        CONFIG
 # ------------------------------------------------------
@@ -34,29 +36,47 @@ def get_data(NAME):
     df_apartments = b2.get_df(NAME)
     return df_apartments
 
- 
 @st.cache_resource
 def get_model(NAME):
     # collect data frame of reviews and their sentiment
     b2.set_bucket(os.environ['B2_BUCKETNAME'])
     model = b2.get_model(NAME)
     return model
-# ------------------------------------------------------
-#                         APP
-# ------------------------------------------------------
- 
-df_apartments = get_data(PICKLE_REMOTE_DATA)
 
-#get zip file 
-import io
-import zipfile
-zip_data = get_model("random_forest_model.pkl.zip")
-zip_file = io.BytesIO(zip_data)
+@st.cache_resource
+def get_pickle_model():
+    with open('./random_forest_model_final.pkl', 'rb') as f:
+        analyzer = pickle.load(f)
+    
+    return analyzer
+sqft_model = get_pickle_model()
+# ------------------------------------------------------
+#                         APP BACKBLAZE
+# ------------------------------------------------------
 
-# Extract the ZIP contents in-memory
-with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-    with zip_ref.open("random_forest_model.pkl") as model_file:
-            sqft_model = pickle.load(model_file)
+def get_info_backblaze():
+    df_apartments = get_data(PICKLE_REMOTE_DATA)
+    df_price_prediction = get_data(PREDICTED_PRICES)
+
+# ------------------------------------------------------
+#                         APP LOCAL
+# ------------------------------------------------------
+def get_data_local(pickle_file_path):
+    try:
+        with open(pickle_file_path, 'rb') as file:
+            data = pickle.load(file)
+        if isinstance(data, pd.DataFrame):
+            return data
+        else:
+            raise ValueError("The loaded pickle file does not contain a Pandas DataFrame.")
+    except Exception as e:
+        print(f"An error occurred while loading the pickle file: {e}")
+        return None
+df_apartments = get_data_local(PICKLE_REMOTE_DATA)
+df_price_prediction = get_data_local(PREDICTED_PRICES)
+
+# Load the model from the ZIP file
+
 # ------------------------------
 # PART 1 : Filter Data
 # ------------------------------
@@ -102,6 +122,34 @@ with col5:
 with col6:
     bathroom_rate = st.selectbox('Bathroom rating',range(10,0,-1))
 
+# ------------------------------
+# Create st.session to hold apartments after user selects there options
+# ------------------------------
+#inialize so no error onload
+filtered_data = []
+if "data" not in st.session_state:
+    st.session_state.data = []
+# Button to apply filters
+if st.button("Show Filtered Apartments"):
+    # Filter the data based on selections
+    filtered_data = df_cleaned1[
+    (df_cleaned1['state'] == selected_state) &
+    #(df_cleaned1['bedrooms'] == selected_bedrooms)&
+    (df_cleaned1['price']>=selected_price[0]) &
+    (df_cleaned1['price']<= selected_price[1])]
+    #&(df_cleaned1['bathrooms']== selected_bathrooms)
+    chunk_size = 5
+    # Split the DataFrame into chunks of 5 rows each
+    df_chunks = [
+        filtered_data.iloc[i:i + chunk_size]
+        for i in range(0, len(filtered_data), chunk_size)
+    ]
+    # Store the list of DataFrames in session state
+    st.session_state.data = df_chunks  # Overwrite with the new chunks
+    
+#-------------------------------------------------------------------------
+#               SHOW APARTMENTS FROM FILTERED
+#-------------------------------------------------------------------------
 def display_apartments(data):
 
     for _, row in data.iterrows():
@@ -134,36 +182,6 @@ def display_apartments(data):
                 st.markdown(f"**Has Photo:** {'Yes' if row['has_photo'] else 'No'}")
                 st.markdown(f"**Latitude:** {row['latitude']}")
                 st.markdown(f"**Longitude:** {row['longitude']}")
-#inialize so no error onload
-filtered_data = []
-if "data" not in st.session_state:
-    st.session_state.data = []
-# Button to apply filters
-if st.button("Show Filtered Apartments"):
-    # Filter the data based on selections
-    filtered_data = df_cleaned1[
-    (df_cleaned1['state'] == selected_state) &
-    #(df_cleaned1['bedrooms'] == selected_bedrooms)&
-    (df_cleaned1['price']>=selected_price[0]) &
-    (df_cleaned1['price']<= selected_price[1])]
-    #&(df_cleaned1['bathrooms']== selected_bathrooms)
-    chunk_size = 5
-    # Split the DataFrame into chunks of 5 rows each
-    df_chunks = [
-        filtered_data.iloc[i:i + chunk_size]
-        for i in range(0, len(filtered_data), chunk_size)
-    ]
-    # Store the list of DataFrames in session state
-    st.session_state.data = df_chunks  # Overwrite with the new chunks
-    
-
-    # Display the filtered data as a single-row table
-    #st.write(f"Apartments in {selected_state} with {selected_bedrooms} bedrooms:")
-
-#-------------------------------------------------------------------------
-#               SHOW APARTMENTS FROM FILTERED
-#-------------------------------------------------------------------------
-
 if "counter" not in st.session_state:
     st.session_state.counter = 0 
 
@@ -231,10 +249,7 @@ if "data" in st.session_state and len(st.session_state.data) > 0:
 
 
 from utils.jagath import FilteredData
-st.write("testst")
 if st.button('More Recommended Apartments'):
-    st.write("fdswfasdfsdfdsfsdfsdf")
-
     FD = FilteredData(df_cleaned1, selected_state,selected_price,selected_bedrooms, selected_bathrooms)
     filtered_data = FD.filtered_data
     df_filtered = pd.DataFrame(filtered_data)
