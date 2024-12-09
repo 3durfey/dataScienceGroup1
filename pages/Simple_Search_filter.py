@@ -5,23 +5,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 ss = Simple_Search(df_cleaned1)
 
-@st.cache_data
-def CV_matrix():
-    return ss.X
+# @st.cache_data
+# def CV_matrix():
+#     return ss.X
 
-@st.cache_resource
-def vectorizer_cv():
-    return ss.cv
+# @st.cache_resource
+# def vectorizer_cv():
+#     return ss.cv
 
 st.title('Apartment Search filter')
 
 search_query = st.text_input('Enter the Apartment Name or Address....')
 
 if search_query:
-    # model = vectorizer_cv()
-    # input_vector = model.transform([search_query])
-    # scores = cosine_similarity(input_vector, CV_matrix())
-    # idxs = scores.argsort()[0][-1:-6:-1]
     idxs = ss.get_top5_indices(search_query)
     try:
         idxs = [i for i in idxs if i in df_cleaned1.index]
