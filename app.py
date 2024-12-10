@@ -21,7 +21,7 @@ PREDICTED_PRICES = 'df_price_prediction.pickle'
 # ------------------------------------------------------
 #                        CONFIG
 # ------------------------------------------------------
-load_dotenv(dotenv_path=".env")
+load_dotenv()
 # load Backblaze connection
 b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
         key_id=os.environ['B2_KEYID'],
