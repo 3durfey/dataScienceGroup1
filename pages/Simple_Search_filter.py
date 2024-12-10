@@ -18,10 +18,6 @@ st.title('Apartment Search filter')
 search_query = st.text_input('Enter the Apartment Name or Address....')
 
 if search_query:
-    # model = vectorizer_cv()
-    # input_vector = model.transform([search_query])
-    # scores = cosine_similarity(input_vector, CV_matrix())
-    # idxs = scores.argsort()[0][-1:-6:-1]
     idxs = ss.get_top5_indices(search_query)
     try:
         idxs = [i for i in idxs if i in df_cleaned1.index]
