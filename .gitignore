@@ -29,3 +29,6 @@ cython_debug/
 # project
 .env
 environment.yml
+
+#local data
+10k_data.pickle

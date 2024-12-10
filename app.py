@@ -3,6 +3,8 @@ import pickle
 from io import StringIO
 import pandas as pd
 import streamlit as st
+import sys
+sys.path.append('/opt/miniconda3/envs/dataScience/lib/python3.9/site-packages') 
 from dotenv import load_dotenv
 from utils.jagath import Clean, create_half_bathrooms
 from utils.b2 import B2
@@ -10,7 +12,7 @@ from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution
 from io import BytesIO
 import io
 import zipfile
- 
+from utils.jagath import PCA_PAIRWISE, FilteredData
 # ------------------------------------------------------
 #                      APP CONSTANTS
 # ------------------------------------------------------
@@ -19,7 +21,7 @@ PREDICTED_PRICES = 'df_price_prediction.pickle'
 # ------------------------------------------------------
 #                        CONFIG
 # ------------------------------------------------------
-load_dotenv()
+load_dotenv(dotenv_path=".env")
 # load Backblaze connection
 b2 = B2(endpoint=os.environ['B2_ENDPOINT'],
         key_id=os.environ['B2_KEYID'],
@@ -54,9 +56,8 @@ sqft_model = get_pickle_model()
 #                         APP BACKBLAZE
 # ------------------------------------------------------
 
-def get_info_backblaze():
-    df_apartments = get_data(PICKLE_REMOTE_DATA)
-    df_price_prediction = get_data(PREDICTED_PRICES)
+df_apartments = get_data(PICKLE_REMOTE_DATA)
+df_price_prediction = get_data(PREDICTED_PRICES)
 
 # ------------------------------------------------------
 #                         APP LOCAL
@@ -72,8 +73,8 @@ def get_data_local(pickle_file_path):
     except Exception as e:
         print(f"An error occurred while loading the pickle file: {e}")
         return None
-df_apartments = get_data_local(PICKLE_REMOTE_DATA)
-df_price_prediction = get_data_local(PREDICTED_PRICES)
+#df_apartments = get_data_local(PICKLE_REMOTE_DATA)
+#df_price_prediction = get_data_local(PREDICTED_PRICES)
 
 # Load the model from the ZIP file
 
@@ -89,13 +90,9 @@ df_cleaned1 = Clean(df_apartments)
  
 # Get unique states and max bedrooms
 states = df_cleaned1['state'].unique()
-
 max_bedrooms = int(df_cleaned1['bedrooms'].max())
-
 max_bathrooms = int(df_cleaned1['bathrooms'].max())
-
 min_price = int(df_cleaned1['price'].min())
-
 max_price = int(df_cleaned1['price'].max())
 
 # Display filters in one row
@@ -122,10 +119,15 @@ with col5:
 with col6:
     bathroom_rate = st.selectbox('Bathroom rating',range(10,0,-1))
 
+
 # ------------------------------
-# Create st.session to hold apartments after user selects there options
+# Create st.session to hold apartments after user selects options
 # ------------------------------
-#inialize so no error onload
+# Initialize session state for filtered data and recommended apartments
+if "filtered_data" not in st.session_state:
+    st.session_state.filtered_data = pd.DataFrame()
+if "recommended_data" not in st.session_state:
+    st.session_state.recommended_data = pd.DataFrame()
 filtered_data = []
 if "data" not in st.session_state:
     st.session_state.data = []
@@ -248,23 +250,48 @@ if "data" in st.session_state and len(st.session_state.data) > 0:
 
 
 
-from utils.jagath import FilteredData
 if st.button('More Recommended Apartments'):
-    FD = FilteredData(df_cleaned1, selected_state,selected_price,selected_bedrooms, selected_bathrooms)
-    filtered_data = FD.filtered_data
-    df_filtered = pd.DataFrame(filtered_data)
-    st.write(df_filtered)
-    ##### repeated code block can be further reduced to a function in ScoreDistribution class###### need to work on it
-    bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
-    bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
-    np_score = bedroom_dis.apply_score() + bathroom_dis.apply_score()
-    df_filtered['score'] = np_score
-    df_filtered = df_filtered.sort_values(by = 'score', ascending= False)
-    ###################################
+    try:
 
+        # Initialize FilteredData with selected filters
+        FD = FilteredData(df_cleaned1, selected_state, selected_price, selected_bedrooms, selected_bathrooms)
+        filtered_data = FD.filtered_data
+        
+        # Convert filtered data to DataFrame
+        df_filtered = pd.DataFrame(filtered_data)
 
-    PPP = PCA_PAIRWISE(df_cleaned1)
-    top5_indices = df_filtered.index[:5]
-    top_similar = PPP.get_pairwise_dis(top5_index= top5_indices)
+        # Ensure necessary columns exist
+        if 'bathrooms' not in df_filtered.columns:
+            st.error("The 'bathrooms' column is missing. Please check the data.")
+            st.stop()
+        if 'bedrooms' not in df_filtered.columns:
+            st.error("The 'bedrooms' column is missing. Please check the data.")
+            st.stop()
+
+        # Calculate scores using ScoreDistribution
+        bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
+        bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
+        np_score = bedroom_dis.apply_score() + bathroom_dis.apply_score()
+
+        # Add score to the DataFrame and sort by score
+        df_filtered['score'] = np_score
+        df_filtered = df_filtered.sort_values(by='score', ascending=False)
+
+        # Ensure df_filtered is not empty before proceeding
+        if df_filtered.empty:
+            st.warning("No recommended apartments match the selected criteria.")
+
+        # Perform PCA and get similar apartments
+        PPP = PCA_PAIRWISE(df_cleaned1)
+        top5_indices = df_filtered.index[:5]
+        top_similar = PPP.get_pairwise_dis(top5_index=top5_indices)
+
+        # Display the recommended apartments
+        display_apartments(df_cleaned1.loc[top_similar])
     
-    display_apartments(df_cleaned1.loc[top_similar])
+    except KeyError as e:
+        st.error(f"A required column is missing: {e}")
+    except ValueError as e:
+        st.error(f"Value error encountered: {e}")
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {e}")
