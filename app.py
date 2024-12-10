@@ -136,10 +136,10 @@ if st.button("Show Filtered Apartments"):
     # Filter the data based on selections
     filtered_data = df_cleaned1[
     (df_cleaned1['state'] == selected_state) &
-    #(df_cleaned1['bedrooms'] == selected_bedrooms)&
+    (df_cleaned1['bedrooms'] == selected_bedrooms)&
     (df_cleaned1['price']>=selected_price[0]) &
-    (df_cleaned1['price']<= selected_price[1])]
-    #&(df_cleaned1['bathrooms']== selected_bathrooms)
+    (df_cleaned1['price']<= selected_price[1])
+    &(df_cleaned1['bathrooms']== selected_bathrooms)]
     chunk_size = 5
     # Split the DataFrame into chunks of 5 rows each
     df_chunks = [
