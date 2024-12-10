@@ -1,6 +1,6 @@
 ### Abstract or Overview
 
-The project is a data-driven web application designed to assist users in exploring rental property options based on their preferences. It integrates data filtering, scoring, machine learning predictions, and recommendation systems to create a comprehensive solution for rental property searches. Users can filter apartments by attributes such as the number of bedrooms, bathrooms, and price range. They can also assign weights to these criteria to prioritize results. The tool includes a scoring system and re...
+The project is a data-driven web application designed to assist users in exploring rental property options based on their preferences. It integrates data filtering, scoring, machine learning predictions, and recommendation systems to create a comprehensive solution for rental property searches. Users can filter apartments by attributes such as the number of bedrooms, bathrooms, and price range. They can also assign weights to these criteria to prioritize results. 
 
 This application is valuable for potential renters, real estate agents, and property managers, offering a streamlined platform to evaluate properties based on personalized preferences.
 
