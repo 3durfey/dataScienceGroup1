@@ -1,2 +1,2 @@
 python-dotenv
-sklearn
+scikit-learn
