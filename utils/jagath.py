@@ -44,6 +44,43 @@ def create_half_bathrooms(df):
                 continue
     return df
 
+############################# FilteredData class ################################
+
+class FilteredData:
+    def __init__(self,main_df,selected_state,selected_price,selected_bedrooms, selected_bathrooms):
+        """
+        Simple class for filtering Dataframe , built just to remove unnecessary repetitive filtering of same features 
+
+        Args:
+            main_df (pd.DataFrame_): the main dataframe for filtering
+            selected_state (str): selected state
+            selected_price (list): selected a list of price range as [min,max]
+            selected_bedrooms (int): int bedrooms
+            selected_bathrooms (int): int bathrooms
+        """
+        self.main_df = main_df
+        self.selected_state = selected_state
+        self.selected_price = selected_price
+        self.selected_bedrooms = selected_bedrooms
+        self.selected_bathrooms = selected_bathrooms
+        self.filtered_data = self._filter_function()
+
+    def _filter_function(self):
+        """_summary_
+
+        Returns:
+            pd.Dataframe: filtered Dataframe in same format as main_df
+        """
+
+        filtered_data = self.main_df[
+            (self.main_df['state'] == self.selected_state) &
+            #(self.main_df['bedrooms'] == self.selected_bedrooms)&
+            (self.main_df['price']>=self.selected_price[0]) &
+            (self.main_df['price']<= self.selected_price[1])
+            #&(self.main_df['bathrooms']== self.selected_bathrooms)
+        ]
+        return filtered_data
+
 ############################################## PCA and Pairwise matrix ###############
 
 COLUMNS_CONSIDERED = ['bathrooms', 'bedrooms', 'price', 'square_feet', 'state', 'latitude', 'longitude', 'cats_allowed', 'dogs_allowed']
