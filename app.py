@@ -217,7 +217,8 @@ if "data" in st.session_state and len(st.session_state.data) > 0:
 
     # Assuming `df_filtered` is already available and contains all the columns provided
     # Ensure `df_filtered` is a pandas DataFrame
-    df_filtered = pd.DataFrame(filtered_data)
+    #used current session df Jagath may change back to filtered_data
+    df_filtered = pd.DataFrame(st.session_state.data[st.session_state.counter])
     ### Adding the scoring system/methods
     bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
     bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
