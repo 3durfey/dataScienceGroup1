@@ -6,7 +6,7 @@ import streamlit as st
 import sys
 sys.path.append('/opt/miniconda3/envs/dataScience/lib/python3.9/site-packages') 
 from dotenv import load_dotenv
-from utils.jagath import Clean, create_half_bathrooms
+from utils.jagath import Clean
 from utils.b2 import B2
 from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
 from io import BytesIO
