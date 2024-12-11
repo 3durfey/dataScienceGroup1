@@ -4,9 +4,8 @@ from io import StringIO
 import pandas as pd
 import streamlit as st
 import sys
-from utils.jagath import Clean
+from utils.jagath import Clean, ScoreDistribution
 from utils.b2 import B2
-from  dataclean_and_score.ScoreDistribution1_1  import ScoreDistribution 
 from io import BytesIO
 import io
 import zipfile
