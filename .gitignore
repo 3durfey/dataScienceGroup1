@@ -32,3 +32,4 @@ environment.yml
 
 #local data
 10k_data.pickle
+test.py
