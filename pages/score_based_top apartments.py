@@ -102,9 +102,9 @@ if st.button("Show Filtered Apartments"):
     start_row = (current_page - 1) * rows_per_page
     end_row = start_row + rows_per_page
     df_paginated = df_filtered.iloc[start_row:end_row]
-       ##need the top5 indices for PCA calculation
     # Display the paginated data in a custom format
     display_apartments(df_paginated)
+    
 #---------------------------------------------------------------------------------------------------------
 #                            GET SIMILAR APARTMENT 
 #---------------------------------------------------------------------------------------------------------
