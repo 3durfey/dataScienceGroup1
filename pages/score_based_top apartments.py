@@ -76,9 +76,14 @@ if st.button("Show Filtered Apartments"):
     # Ensure `df_filtered` is a pandas DataFrame
     #used current session df Jagath may change back to filtered_data
     df_filtered = pd.DataFrame(filtered_data)
-    ### Adding the scoring system/methods
-    bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
-    bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
+    try:
+        ### Adding the scoring system/methods
+        bathroom_dis = ScoreDistribution(df_filtered['bathrooms'], selected_bathrooms, bathroom_rate)
+        bedroom_dis = ScoreDistribution(df_filtered['bedrooms'], selected_bedrooms, bedroom_rate)
+    except:
+        st.error("No data available to display.")
+        st.stop()
+
     np_score = bedroom_dis.apply_score() + bathroom_dis.apply_score()
     df_filtered['score'] = np_score
     df_filtered = df_filtered.sort_values(by = 'score', ascending= False)
