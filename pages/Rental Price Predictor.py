@@ -5,6 +5,25 @@ import pandas as pd
 # Load data into a DataFrame
 url = "https://raw.githubusercontent.com/3durfey/dataScienceGroup1/refs/heads/main/data/predicted_price.csv"
 
+
+def test_load_data(url):
+    # Load the data
+    df = pd.read_csv(url)
+
+    # Check if the DataFrame is not empty
+    assert not df.empty, "The DataFrame is empty. Data did not load correctly."
+
+    # Check if the expected columns exist
+    expected_columns = {'square_feet', 'bedrooms', 'bathrooms', 'predicted_price'}
+    assert expected_columns.issubset(df.columns), f"Expected columns {expected_columns} are not all present in the DataFrame."
+
+    # Check if the data types of specific columns are as expected
+    assert pd.api.types.is_numeric_dtype(df['square_feet']), "'square_feet' column is not numeric."
+    assert pd.api.types.is_numeric_dtype(df['bedrooms']), "'bedrooms' column is not numeric."
+    assert pd.api.types.is_numeric_dtype(df['bathrooms']), "'bathrooms' column is not numeric."
+    assert pd.api.types.is_numeric_dtype(df['predicted_price']), "'predicted_price' column is not numeric."
+
+
 @st.cache_data
 def load_data():
     # Read the CSV file from the provided URL

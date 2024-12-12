@@ -1,138 +1,130 @@
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from sklearn.preprocessing import PolynomialFeatures, OneHotEncoder, StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import streamlit as st
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.metrics import mean_squared_error, r2_score
 
+class RentalPriceModel:
+    def __init__(self, df):
+        """
+        Initialize the RentalPriceModel with a DataFrame.
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("Input data must be a pandas DataFrame.")
+        self.df = df
+        self.cleaned_df = None
+        self.pipeline = None
 
+    def clean_data(self):
+        """
+        Cleans the DataFrame by filtering, removing duplicates, and handling missing columns.
+        """
+        try:
+            clean_df = self.df.copy()
 
+            # Filter rows based on currency
+            if 'currency' in clean_df.columns:
+                clean_df = clean_df[clean_df['currency'] == 'USD']
+            else:
+                raise KeyError("The column 'currency' is missing from the DataFrame.")
 
-def Clean(df):
-    """
-    Here, the DataFrame df column 'currency' is used as means for checking for 
-    incorrect data entries
-    """
-    clean_df = df.copy()
-    clean_df = clean_df[clean_df['currency']=='USD']
-    clean_df.drop_duplicates(keep = 'first',inplace = True)
-    if 'bathrooms' in clean_df.columns:
-        clean_df['bathrooms'] = clean_df['bathrooms'].apply(lambda x: float(x))
-    if 'bedrooms' in clean_df.columns:
-        clean_df['bedrooms'] = clean_df['bedrooms'].apply(lambda x: float(x))
-    if 'cats_allowed' not in clean_df.columns:
-        clean_df['cats_allowed'] = clean_df['pets_allowed'].isin({'Cats,Dogs', 'Cats'})
-    if 'dogs_allowed' not in clean_df.columns:
-        clean_df['dogs_allowed'] = clean_df['pets_allowed'].isin({'Cats,Dogs', 'Dogs'})
- 
-    clean_df.reset_index(drop  = True,inplace = True)
-    clean_df = clean_df
- 
-    print(f'Data cleaning is success, returning clean_df')
-    return clean_df
+            # Remove duplicates
+            clean_df.drop_duplicates(keep='first', inplace=True)
 
-# Function to train a regression model
-def run_regression(df):
-     
-    """
-    Trains a polynomial regression model to predict rental prices based on features.
-    Returns the trained pipeline and evaluation metrics (R2 and MSE).
-    """
-     
-    features = ['AmenityCount','square_feet','bedrooms','bathrooms'] # Define feature columns
-    target = 'price' # Define target variable
+            # Handle bathroom and bedroom columns
+            if 'bathrooms' in clean_df.columns:
+                clean_df['bathrooms'] = pd.to_numeric(clean_df['bathrooms'], errors='coerce').fillna(0)
+            if 'bedrooms' in clean_df.columns:
+                clean_df['bedrooms'] = pd.to_numeric(clean_df['bedrooms'], errors='coerce').fillna(0)
 
-    # Separate the features and target
-    X = df[features]
-    y = df[target]
+            # Handle pet allowances
+            if 'pets_allowed' in clean_df.columns:
+                clean_df['cats_allowed'] = clean_df['pets_allowed'].str.contains('Cats', na=False)
+                clean_df['dogs_allowed'] = clean_df['pets_allowed'].str.contains('Dogs', na=False)
+            else:
+                clean_df['cats_allowed'] = False
+                clean_df['dogs_allowed'] = False
 
-    encoder = OneHotEncoder(handle_unknown="ignore")
-    # One-hot encode categorical features and scale numerical features
+            clean_df.reset_index(drop=True, inplace=True)
+            self.cleaned_df = clean_df
+            print("Data cleaning is successful.")
+            return self.cleaned_df
+        except Exception as e:
+            raise RuntimeError(f"An error occurred during data cleaning: {e}")
 
-    # Define preprocessor: One-hot encodes categorical and scales numerical features
-    preprocessor = ColumnTransformer(transformers=[
-    ('cat', OneHotEncoder(), ['bedrooms','bathrooms','AmenityCount']),
-    ('num', StandardScaler(), ['square_feet'])
-    ])
- 
-    # Polynomial transformation with degree 2
-        # Polynomial degree (adjust this as needed)
-    poly = PolynomialFeatures(degree=2)
- 
-    # Create a pipeline with preprocessing, polynomial transformation, and regression
-    pipeline = Pipeline(steps=[
-        ('preprocessor', preprocessor),
-        ('poly', poly),
-        ('regressor', LinearRegression())
-    ])
-    
-    # Split data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    pipeline.fit(X_train, y_train) # Train the model pipeline
-    print("Model trained successfully.")
-    # Predict on test data
-    y_pred = pipeline.predict(X_test)
-    # Calculate Mean Squared Error (MSE) and R-Squared (R2) for model evaluation
-    mse = mean_squared_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
- 
-    return pipeline, y_test, y_pred, r2, mse # Return model pipeline and evaluation metrics
+    def train_regression_model(self):
+        """
+        Trains a polynomial regression model to predict rental prices.
+        Returns the trained pipeline and evaluation metrics (R2 and MSE).
+        """
+        try:
+            if self.cleaned_df is None:
+                raise ValueError("Data must be cleaned before training the model.")
 
+            features = ['AmenityCount', 'square_feet', 'bedrooms', 'bathrooms']
+            target = 'price'
 
-# Function to generate feature data for predictions
-def generate_feature_data():
-    """
-    Generates synthetic feature data for testing predictions.
-    Returns a DataFrame with square footage, bedrooms, bathrooms, and AmenityCount.
-    """
-    # Generate square footage from 500 to 10000 with a step of 100
-    sqft_values = np.arange(500, 10001, 100)
-    data = []
+            for column in features + [target]:
+                if column not in self.cleaned_df.columns:
+                    raise KeyError(f"The required column '{column}' is missing from the cleaned DataFrame.")
 
-    # Loop through square footage values to generate bedrooms, bathrooms, and amenities
-    for sqft in sqft_values:
-        # Set bedrooms based on square footage
-        bedrooms = min(8, max(1, sqft // 1000))
+            # Separate features and target
+            X = self.cleaned_df[features]
+            y = self.cleaned_df[target]
 
-        # Set bathrooms to be at least half of bedrooms, rounded up
-        bathrooms = int(np.ceil(bedrooms / 2))
+            # Define preprocessor
+            preprocessor = ColumnTransformer(transformers=[
+                ('num', StandardScaler(), ['square_feet']),
+                ('cat', OneHotEncoder(), ['bedrooms', 'bathrooms', 'AmenityCount'])
+            ])
 
-        # Randomize amenity count for variety
-        amenity_count = np.random.randint(1, 10)
+            # Polynomial transformation and pipeline
+            poly = PolynomialFeatures(degree=2)
+            self.pipeline = Pipeline(steps=[
+                ('preprocessor', preprocessor),
+                ('poly', poly),
+                ('regressor', LinearRegression())
+            ])
 
-        # Append generated data to list
-        # Append the generated row to data
-        data.append({
-            'square_feet': sqft,
-            'bedrooms': bedrooms,
-            'bathrooms': bathrooms,
-            'AmenityCount': amenity_count
-        })
+            # Train-test split
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            self.pipeline.fit(X_train, y_train)
 
-    # Convert list of dictionaries to DataFrame
-    feature_df = pd.DataFrame(data)
-    return feature_df
+            # Predict and evaluate
+            y_pred = self.pipeline.predict(X_test)
+            mse = mean_squared_error(y_test, y_pred)
+            r2 = r2_score(y_test, y_pred)
 
-# Function to predict prices using the trained pipeline
-def predict_prices(feature_data, pipeline):
-    """
-    Predicts rental prices based on feature data and a trained model pipeline.
-    Returns a DataFrame with features and predicted prices.
-    """
-    # Predict prices using the trained pipeline
-    predicted_prices = pipeline.predict(feature_data)
+            print("Model trained successfully.")
+            return self.pipeline, y_test, y_pred, r2, mse
 
-    # Create a new DataFrame to hold the features and predicted prices
-    result_df = feature_data.copy()  # Start with the features DataFrame
-    result_df['predicted_price'] = predicted_prices  # Add predictions as a new column
+        except Exception as e:
+            raise RuntimeError(f"An error occurred during model training: {e}")
 
-    return result_df # Return DataFrame with predictions
+    def predict_prices(self, feature_data):
+        """
+        Predicts rental prices based on feature data and the trained model pipeline.
+        Returns a DataFrame with features and predicted prices.
+        """
+        try:
+            if self.pipeline is None:
+                raise ValueError("Model must be trained before making predictions.")
 
+            if not isinstance(feature_data, pd.DataFrame):
+                raise TypeError("Feature data must be a pandas DataFrame.")
+
+            predicted_prices = self.pipeline.predict(feature_data)
+            result_df = feature_data.copy()
+            result_df['predicted_price'] = predicted_prices
+            return result_df
+        except Exception as e:
+            raise RuntimeError(f"An error occurred during price prediction: {e}")
 
 # Helper function to count amenities
 def count_valid_amenities(amenities):
@@ -140,51 +132,51 @@ def count_valid_amenities(amenities):
     Count the number of valid amenities in a comma-separated string.
     Returns the count of amenities for each entry.
     """
-    if pd.isnull(amenities):
-        return 0
-    amenities_list = [item.strip() for item in amenities.split(',') if item.strip()]
-    return len(amenities_list)
-
+    try:
+        if pd.isnull(amenities):
+            return 0
+        amenities_list = [item.strip() for item in amenities.split(',') if item.strip()]
+        return len(amenities_list)
+    except Exception as e:
+        raise ValueError(f"Error counting amenities: {e}")
 
 # Function to plot a box plot of price by amenity count
 def plot_boxplot_price_by_amenity_count(data, max_price=3000):
     """
     Display a box plot of price by amenity count.
-    Filters data by price and calculates amenity count for each row.
-    
-    Parameters:
-    - data: pd.DataFrame containing 'amenities' and 'price' columns.
-    - max_price: Maximum price value to filter the data by.
     """
-    # Add AmenityCount column
-    data['AmenityCount'] = data['amenities'].apply(count_valid_amenities)
-    filtered_data = data[data['price'] < max_price]
-    
-    # Create the box plot
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(x=filtered_data['AmenityCount'], y=filtered_data['price'])
-    plt.xlabel('Amenity Count')
-    plt.ylabel('Price')
-    plt.title('Box Plot of Price by Amenity Count')
-    
-    # Display in Streamlit
-    st.pyplot(plt)
+    try:
+        if 'amenities' not in data.columns or 'price' not in data.columns:
+            raise KeyError("Required columns 'amenities' and 'price' are missing from the data.")
 
+        data['AmenityCount'] = data['amenities'].apply(count_valid_amenities)
+        filtered_data = data[data['price'] < max_price]
+
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x=filtered_data['AmenityCount'], y=filtered_data['price'])
+        plt.xlabel('Amenity Count')
+        plt.ylabel('Price')
+        plt.title('Box Plot of Price by Amenity Count')
+
+        st.pyplot(plt)
+    except Exception as e:
+        st.error(f"Error creating box plot: {e}")
 
 # Function to plot a scatter plot of longitude vs latitude
 def plot_scatter_longitude_latitude(data):
     """
     Display a scatter plot of longitude vs latitude.
-    
-    Parameters:
-    - data: pd.DataFrame containing 'longitude' and 'latitude' columns.
     """
-    plt.figure(figsize=(10, 6))
-    plt.scatter(data['longitude'], data['latitude'], color='red', marker='o')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.title('Scatter Plot of Latitude vs Longitude')
-    
-    # Display in Streamlit
-    st.pyplot(plt)
+    try:
+        if 'longitude' not in data.columns or 'latitude' not in data.columns:
+            raise KeyError("Required columns 'longitude' and 'latitude' are missing from the data.")
 
+        plt.figure(figsize=(10, 6))
+        plt.scatter(data['longitude'], data['latitude'], color='red', marker='o')
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('Scatter Plot of Latitude vs Longitude')
+
+        st.pyplot(plt)
+    except Exception as e:
+        st.error(f"Error creating scatter plot: {e}")

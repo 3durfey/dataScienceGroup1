@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.sneha import plot_boxplot_price_by_amenity_count, plot_scatter_longitude_latitude
-from app import df_cleaned1 as dataFrame
+from app import df_cleaned1
 
 # Streamlit app layout
 st.title("Apartment for Rent Data Visualization")
@@ -12,7 +12,7 @@ max_price = st.sidebar.slider("Max Price for Box Plot", min_value=500, max_value
 
 # Box Plot of Price by Amenity Count
 st.subheader("Box Plot of Price by Amenity Count")
-plot_boxplot_price_by_amenity_count(dataFrame, max_price)
+plot_boxplot_price_by_amenity_count(df_cleaned1, max_price)
 
 # Box Plot Section
 st.write("## Price Distribution by Amenity Count")
@@ -26,7 +26,7 @@ st.write(
 
 # Scatter Plot of Longitude vs Latitude
 st.subheader("Scatter Plot of Latitude vs Longitude")
-plot_scatter_longitude_latitude(dataFrame)
+plot_scatter_longitude_latitude(df_cleaned1)
 
 st.write("## Geographical Distribution of Apartments")
 st.write(
