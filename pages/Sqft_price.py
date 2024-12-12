@@ -57,14 +57,14 @@ if st.button("Predict House Price"):
 
 
 # Calculate and display evaluation metrics
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
-mae = mean_absolute_error(y_test, y_pred)
+# y_pred = model.predict(X_test)
+# mse = mean_squared_error(y_test, y_pred)
+# r2 = r2_score(y_test, y_pred)
+# mae = mean_absolute_error(y_test, y_pred)
 
-st.write("### Model Evaluation Metrics")
-st.write(f"Mean Squared Error: {mse:.2f}")
-st.write(f"R-Squared: {r2:.2f}")
-st.write(f"Mean Absolute Error: {mae:.2f}")
+# st.write("### Model Evaluation Metrics")
+# st.write(f"Mean Squared Error: {mse:.2f}")
+# st.write(f"R-Squared: {r2:.2f}")
+# st.write(f"Mean Absolute Error: {mae:.2f}")
 
 
