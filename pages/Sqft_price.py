@@ -42,7 +42,8 @@ def predict_house_price(square_feet, bedrooms, bathrooms, cityname):
 
 
 # Set up the title and input fields in Streamlit
-st.title("House Price Prediction")
+st.title("Apartment Price Prediction")
+st.markdown("This page will provide the user with the 'Price' that is predicted based on the area covered(in sq.ft) and number of bedrooms and bathrooms, cityname ")
 
 # User inputs
 square_feet = st.number_input("Square Feet", min_value=0)
